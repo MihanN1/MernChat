@@ -10,7 +10,6 @@ function ContactList() {
     getAllContacts();
   }, [getAllContacts]);
   if (isUsersLoading) return <UsersLoadingSkeleton />;
-
   return (
     <>
       {allContacts.map((contact) => (
@@ -20,7 +19,7 @@ function ContactList() {
           onClick={() => setSelectedUser(contact)}
         >
           <div className="flex items-center gap-3">
-            <div className={`avatar online`}>
+            <div className={`avatar ${onlineUsers.includes(contact._id) ? "online" : "offline"}`}>
               <div className="size-12 rounded-full">
                 <img src={contact.profilePic || "/avatar.png"} />
               </div>

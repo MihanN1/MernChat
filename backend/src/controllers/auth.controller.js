@@ -1,5 +1,5 @@
-import { generateToken } from "../lib/utils";
-import User from "../models/User";
+import { generateToken } from "../lib/utils.js";
+import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import {sendWelcomeEmail} from "../emails/emailHandlers.js";
 import {ENV} from "../lib/env.js";

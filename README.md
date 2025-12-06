@@ -128,12 +128,13 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Custom events
 * External integrations
 
-### **1.8.x — Friends System**
+### **1.8.x — People Update**
 
 * Proper friend list
 * No “all users in the world” display
 * Blocking
 * Friend nicknames
+* Reporting
 
 ### **1.9.x — Text Formatting**
 
@@ -149,6 +150,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ### **2.1.x — Security Update**
 
 * Permission system overhaul
+* Privacy settings
 * Suspicious login detection
 
 ### **2.2.x — Containerization**
@@ -299,7 +301,7 @@ Contributors should:
 
 ## 5. Reporting
 
-Users can report issues or abusive behavior via the repository's issue tracker.
+Users can report issues or abusive behavior via the repository's issue tracker, **BUT** reporting via the web application itself will be added later.
 
 ## 6. Enforcement
 

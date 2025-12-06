@@ -82,6 +82,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ### **1.1.x — Chats Update**
 
 * Message formatting
+* Notification frontend changes
 * Editable & removable messages
 * Group chats basics
 * Chat deletion

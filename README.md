@@ -1,4 +1,5 @@
 # MernChat Repository Documentation
+The project will have a name when it is FULLY up and running
 
 This file contains three documents:
 
@@ -119,10 +120,12 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Links settings
 * Forwarding settings
 * Message links
+* Reactions
 
 ### **1.6.x — Referral System**
 
-* Humorous referral rewards messages (“Wanted rewards?…”) as requested
+* Humorous referral rewards messages (“Wanted rewards?…”)
+* No actual rewards tho, as this is not for monetisation yet and there are no subscriptions or features that require them.
 
 ### **1.7.x — Webhooks**
 

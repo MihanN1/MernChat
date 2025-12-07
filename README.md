@@ -178,6 +178,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 ## 🔧 Future Update Plans (Extra)
 
 * Last‑seen indicators
+* Turning sounds off and on
+* Making tag notifications toggable
 * Status updates
 * Privacy settings
 * Tags: `@everyone`, `@here`

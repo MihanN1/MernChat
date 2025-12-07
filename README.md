@@ -6,6 +6,7 @@ This file contains three documents:
 1. **README.md**
 2. **Terms of Use (ToU)**
 3. **Code of Conduct (CoC)**
+4. **Privacy Policy (PP)**
 
 ---
 
@@ -58,12 +59,6 @@ This document outlines the structure, technology stack, update roadmap, contribu
 * **Client** → SPA routing + custom navigation animations + persistent themes/languages
 * **Server** → Modular Express structure + versioned API + real-time socket engine
 * **Database** → Mongo models for users, chats, messages, notifications, friends
-* **Planned Internal Structure Improvements:**
-
-  * Move all variables to top of files
-  * Add comments before each release
-  * Fix spacing & semicolons
-  * Heavy code refactoring & splitting
 
 ---
 
@@ -182,7 +177,6 @@ Versions planned from **1.0.x** to **2.5.x**:
 
 ## 🔧 Future Update Plans (Extra)
 
-* Email template improvements (pre‑release task)
 * Last‑seen indicators
 * Status updates
 * Privacy settings
@@ -200,7 +194,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 
 ## 📬 Contacts
 
-*(Placeholder — contacts will be added later)*
+*(Placeholder — contacts will be added later, right now you can contact me through krutoysansn1@gmail.com email, as i am the only developer of this)*
 
 ---
 
@@ -231,7 +225,7 @@ You may:
 You must:
 
 * Keep copyright notices
-* Respect ToU and CoC
+* Respect ToU, PP and CoC
 
 ---
 
@@ -310,6 +304,36 @@ Users can report issues or abusive behavior via the repository's issue tracker, 
 ## 6. Enforcement
 
 Violation of this Code may lead to warnings, account limitations, or removal.
+
+---
+
+## **MernChat Privacy Policy**
+
+MernChat is committed to protecting your privacy and ensuring your data is handled securely. This brief policy explains what information we collect and how it is used.
+
+### **1. Information We Collect**
+
+* **Account Information:** Email, username, and any profile details you provide.
+* **Messages & Media:** All messages and shared content are stored securely and used only for providing the chat service.
+* **Technical Data:** Basic logs such as IP address, device type, and usage analytics to improve performance.
+
+### **2. How We Use Your Information**
+
+* To enable messaging and communication features.
+* To maintain account security and prevent abuse.
+* To improve app performance and user experience.
+
+### **3. Data Sharing**
+
+We do **not** sell or share your personal data with third parties except when required by law or to maintain service functionality.
+
+### **4. Security**
+
+All stored data is protected using modern security practices. We continuously work to keep your information safe.
+
+### **5. Your Rights**
+
+You may request deletion of your data or your account at any time.
 
 ---
 

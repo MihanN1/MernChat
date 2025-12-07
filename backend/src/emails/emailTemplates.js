@@ -3,46 +3,50 @@ export function createWelcomeEmailTemplate(name, clientURL) {
   <!DOCTYPE html>
   <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Welcome to MernChat</title>
   </head>
-  <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-    <div style="background: linear-gradient(to right, #36D1DC, #5B86E5); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
-      <img src="https://img.freepik.com/free-vector/hand-drawn-message-element-vector-cute-sticker_53876-118344.jpg?t=st=1741295028~exp=1741298628~hmac=0d076f885d7095f0b5bc8d34136cd6d64749455f8cb5f29a924281bafc11b96c&w=1480" alt="Messenger Logo" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 50%; background-color: white; padding: 10px;">
-      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 500;">Welcome to Messenger!</h1>
-    </div>
-    <div style="background-color: #ffffff; padding: 35px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-      <p style="font-size: 18px; color: #5B86E5;"><strong>Hello ${name},</strong></p>
-      <p>We're excited to have you join our messaging platform! Messenger connects you with friends, family, and colleagues in real-time, no matter where they are.</p>
-      
-      <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; margin: 25px 0; border-left: 4px solid #36D1DC;">
-        <p style="font-size: 16px; margin: 0 0 15px 0;"><strong>Get started in just a few steps:</strong></p>
-        <ul style="padding-left: 20px; margin: 0;">
-          <li style="margin-bottom: 10px;">Set up your profile picture</li>
-          <li style="margin-bottom: 10px;">Find and add your contacts</li>
-          <li style="margin-bottom: 10px;">Start a conversation</li>
-          <li style="margin-bottom: 0;">Share photos, videos, and more</li>
-        </ul>
+  <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+
+      <div style="padding: 32px; text-align: center; background-color: #1e293b;">
+        <h1 style="color: #38bdf8; font-size: 28px; margin-bottom: 10px;">Welcome to MernChat</h1>
+        <p style="color: #94a3b8; margin: 0;">Secure • Fast • Private</p>
       </div>
-      
-      <div style="text-align: center; margin: 30px 0;">
-        <a href=${clientURL} style="background: linear-gradient(to right, #36D1DC, #5B86E5); color: white; text-decoration: none; padding: 12px 30px; border-radius: 50px; font-weight: 500; display: inline-block;">Open Messenger</a>
+
+      <div style="background-color: #0f172a; padding: 32px;">
+        <p style="font-size: 18px; color: #38bdf8; margin-top: 0;"><strong>Hello ${name},</strong></p>
+        <p>Welcome to <strong>MernChat</strong> — your private, fast, and modern messaging platform where you can connect anytime, anywhere.</p>
+
+        <div style="background-color: #1e293b; padding: 20px; border-radius: 10px; border-left: 4px solid #38bdf8; margin: 24px 0;">
+          <p style="margin: 0 0 12px 0;"><strong>Here's what you can do inside MernChat:</strong></p>
+          <ul style="padding-left: 20px; margin: 0;">
+            <li style="margin-bottom: 8px;">Customize your profile</li>
+            <li style="margin-bottom: 8px;">Chat in real time with anyone</li>
+            <li style="margin-bottom: 8px;">Share images and files securely</li>
+            <li style="margin-bottom: 0;">Enjoy a clean and modern UI</li>
+          </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${clientURL}" style="background-color: #38bdf8; color: #0f172a; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; display: inline-block;">Open MernChat</a>
+        </div>
+
+        <p>If you ever need help, feel free to check our project resources below.</p>
+        <p style="margin-top: 24px; margin-bottom: 0;">Best regards,<br />The MernChat Team</p>
       </div>
-      
-      <p style="margin-bottom: 5px;">If you need any help or have questions, we're always here to assist you.</p>
-      <p style="margin-top: 0;">Happy messaging!</p>
-      
-      <p style="margin-top: 25px; margin-bottom: 0;">Best regards,<br>The Messenger Team</p>
-    </div>
-    
-    <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-      <p>© 2025 Messenger. All rights reserved.</p>
-      <p>
-        <a href="#" style="color: #5B86E5; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
-        <a href="#" style="color: #5B86E5; text-decoration: none; margin: 0 10px;">Terms of Service</a>
-        <a href="#" style="color: #5B86E5; text-decoration: none; margin: 0 10px;">Contact Us</a>
-      </p>
+
+      <div style="text-align: center; padding: 20px; background-color: #1e293b; font-size: 12px; color: #94a3b8;">
+        <p>© 2025 MernChat. All rights reserved.</p>
+        <p>
+          <a href="https://github.com/MihanN1/MernChat/blob/master/README.md" style="color: #38bdf8; text-decoration: none; margin: 0 10px;">Code of Conduct</a>
+          <a href="https://github.com/MihanN1/MernChat/blob/master/README.md" style="color: #38bdf8; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
+          <a href="https://github.com/MihanN1/MernChat/blob/master/README.md" style="color: #38bdf8; text-decoration: none; margin: 0 10px;">Terms of Use</a>
+          <a href="https://github.com/MihanN1/MernChat/blob/master/README.md" style="color: #38bdf8; text-decoration: none; margin: 0 10px;">Contacts</a>
+        </p>
+      </div>
+
     </div>
   </body>
   </html>

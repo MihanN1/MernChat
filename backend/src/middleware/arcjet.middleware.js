@@ -4,7 +4,6 @@ import { isSpoofedBot } from "@arcjet/inspect";
 export const arcjetProtection = async (req, res, next) => {
     try {
         const decision = await aj.protect(req);
-        
         if(decision.isDenied()) {
             if(decision.reason.isRateLimit()) {
                 return res.status(429).json({message: "Rate limit exceeded. Please try again later."});
@@ -14,14 +13,14 @@ export const arcjetProtection = async (req, res, next) => {
                 return res.status(403).json({
                     message: "Access denied by security policy.",
                 });
-            }
-        }
+            };
+        };
         if (decision.results.some(isSpoofedBot)) {
             return NextResponse.json(
             { error: "Forbidden", reason: decision.reason },
             { status: 403 },
             );
-        }
+        };
         next();
     } catch (error) {
         console.log("Arcjet protection error:", error);

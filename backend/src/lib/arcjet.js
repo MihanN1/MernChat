@@ -1,4 +1,4 @@
-import { ENV } from './env.js';
+import { ENV } from "./env.js";
 import arcjet, { detectBot, shield, slidingWindow } from "@arcjet/node";
 
 const aj = arcjet({

@@ -188,7 +188,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Sounds overhaul
 * Up-to-date modules & dependency upgrades
 * Improved cookies system: full refusal, selective cookies, new cookies where needed
-* Custom error pages
+* Custom error pages - *(PARTLY DONE)*
 
 ---
 

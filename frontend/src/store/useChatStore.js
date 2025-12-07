@@ -11,6 +11,7 @@ export const useChatStore = create((set, get) => ({
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
+  notificationSound: new Audio("/sounds/notification.wav"),
   setActiveTab: (tab) => set({ activeTab: tab }),
   setSelectedUser: (selectedUser) => set({ selectedUser }),
   getAllContacts: async () => {
@@ -77,7 +78,7 @@ export const useChatStore = create((set, get) => ({
       const currentMessages = get().messages;
       if (!isMessageSentFromSelectedUser) return;
       set({ messages: [...currentMessages, newMessage] });
-      const notificationSound = new Audio("/sounds/notification.wav");
+      const notificationSound = get().notificationSound;
       notificationSound.currentTime = 0;
       notificationSound.play().catch((e) => console.log("Audio play failed:", e));
     });

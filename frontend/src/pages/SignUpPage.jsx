@@ -2,11 +2,11 @@ import React from 'react';
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
-import { MessageCircleIcon, LockIcon, MailIcon, UserIcon, LoaderIcon } from "lucide-react";
 import { Link } from "react-router";
+import { MessageCircleIcon, LockIcon, MailIcon, UserIcon, LoaderIcon, HashIcon } from "lucide-react";
 
 function SignUpPage() {
-  const [formData, setFormData] = useState({ fullName: "", email: "", password: "" });
+  const [formData, setFormData] = useState({ fullName: "", email: "", password: "", nickname: "", tag: "" });
   const { signup, isSigningUp } = useAuthStore();
 
   const handleSubmit = (e) => {
@@ -62,30 +62,34 @@ function SignUpPage() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="input"
-                        placeholder="T0TALLY_N0T_MY_PA55W0RD"
-                      />
-                      <label className="auth-input-label">Nickname</label>
-                      <div className="relative">
-                        <UserIcon className="auth-input-icon" />
-                        <input
-                          className="input"
-                          value={formData.nickname}
-                          onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                          placeholder="MihanN1"
-                        />
-                      </div>
-                      <label className="auth-input-label">Tag</label>
-                      <div className="relative">
-                        <HashIcon className="auth-input-icon" />
-                        <input
-                          className="input"
-                          value={formData.tag}
-                          onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-                          placeholder="mihann1"
-                        />
-                      </div>
-                    </div>
+                                              placeholder="T0TALLY_N0T_MY_PA55W0RD"
+                    />
                   </div>
+                </div>
+               <div>
+                  <label className="auth-input-label">Nickname</label>
+                  <div className="relative">
+                    <UserIcon className="auth-input-icon" />
+                    <input
+                      className="input"
+                      value={formData.nickname}
+                      onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                      placeholder="MihanN1"
+                    />
+                  </div>
+               </div>
+               <div>
+                  <label className="auth-input-label">Tag</label>
+                  <div className="relative">
+                    <HashIcon className="auth-input-icon" />
+                    <input
+                      className="input"
+                      value={formData.tag}
+                      onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+                      placeholder="mihann1"
+                    />
+                  </div>
+              </div>
                   <button className="auth-btn" type="submit" disabled={isSigningUp}>
                     {isSigningUp ? (
                       <LoaderIcon className="w-full h-5 animate-spin text-center" />

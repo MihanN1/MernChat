@@ -22,12 +22,18 @@ function AccountRecoveryPage() {
       alert("Please enter your password and at least one of Full Name, Nickname, or Tag.");
       return;
     }
-    console.log("EMAIL RECOVERY DATA →", emailRecovery);
-    navigate("/email-change", { state: { fromRecovery: true, ...emailRecovery } });
+    navigate("/email-change", {
+      state: {
+        fromRecovery: true,
+        fullName,
+        nickname,
+        tag,
+      },
+    });
   };
   const handlePasswordRecovery = (e) => {
     e.preventDefault();
-    console.log("PASSWORD RECOVERY DATA →", passwordRecovery);
+    // TODO: call backend to trigger password reset email using passwordRecovery.email
   };
   return (
     <div className="w-full flex items-center justify-center p-4 bg-slate-900">

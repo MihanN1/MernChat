@@ -66,7 +66,7 @@ This document outlines the structure, technology stack, update roadmap, contribu
 
 Versions planned from **1.0.x** to **2.5.x**:
 
-### **1.0.x — Account System Update**
+### **1.0.x — Account System Update - BEING DEVELOPED RN**
 
 * Refactor email system
 * Account recovery
@@ -133,6 +133,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * No “all users in the world” display
 * Blocking
 * Friend nicknames
+* Email receiving with Resend
 * Reporting
 
 ### **1.9.x — Text Formatting**

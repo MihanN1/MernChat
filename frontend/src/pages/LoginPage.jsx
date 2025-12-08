@@ -1,19 +1,20 @@
+// src/pages/LoginPage.jsx
 import React from 'react';
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
 import { MessageCircleIcon, LockIcon, MailIcon, LoaderIcon } from "lucide-react";
-import { Link } from "react-router";
-
+import { Link } from "react-router-dom";
 
 function LoginPage() {
-  const [formData, setFormData] = useState({ fullName: "", email: "", password: "" });
+  const [formData, setFormData] = useState({ identifier: "", password: "" });
   const { login, isLoggingIn } = useAuthStore();
-  
+
   const handleSubmit = (e) => {
       e.preventDefault();
-      signup(formData);
+      login(formData);
   };
+
   return (
     <div className="w-full flex items-center justify-center p-4 bg-slate-900">
       <div className="relative w-full max-w-6xl md:h-[800px] h-[650px]">
@@ -28,15 +29,15 @@ function LoginPage() {
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label className="auth-input-label">Email</label>
+                    <label className="auth-input-label">Email or Nickname</label>
                     <div className="relative">
                       <MailIcon className="auth-input-icon" />
                       <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        type="text"
+                        value={formData.identifier}
+                        onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
                         className="input"
-                        placeholder="johndoe@gmail.com"
+                        placeholder="email or nickname"
                       />
                     </div>
                   </div>
@@ -49,9 +50,12 @@ function LoginPage() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="input"
-                        placeholder="Enter your password"
+                        placeholder="D0nT_Tel1_aNy0n3_My_Pa55W0rD"
                       />
                     </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Link to="/recover" className="text-sm text-cyan-300 hover:underline">Forgot your account details?</Link>
                   </div>
                   <button className="auth-btn" type="submit" disabled={isLoggingIn}>
                     {isLoggingIn ? (
@@ -68,23 +72,6 @@ function LoginPage() {
                 </div>
               </div>
             </div>
-            <div className="hidden md:w-1/2 md:flex items-center justify-center p-6 bg-gradient-to-bl from-slate-800/20 to-transparent">
-              <div>
-                <img
-                  src="/login.png"
-                  alt="People using mobile devices"
-                  className="w-full h-auto object-contain"
-                />
-                <div className="mt-6 text-center">
-                  <h3 className="text-xl font-medium text-cyan-400">Connect to everyone and everywhere</h3>
-                  <div className="mt-4 flex justify-center gap-4">
-                    <span className="auth-badge">Free</span>
-                    <span className="auth-badge">Easy Setup</span>
-                    <span className="auth-badge">Private</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </BorderAnimatedContainer>
       </div>
@@ -92,4 +79,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage
+export default LoginPage;

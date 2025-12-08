@@ -36,7 +36,7 @@ function SignUpPage() {
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         className="input"
-                        placeholder="John Doe"
+                        placeholder="Mikhail Kravtsov"
                       />
                     </div>
                   </div>
@@ -49,7 +49,7 @@ function SignUpPage() {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="input"
-                        placeholder="johndoe@gmail.com"
+                        placeholder="sendmeanemail@gmail.com"
                       />
                     </div>
                   </div>
@@ -62,8 +62,28 @@ function SignUpPage() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="input"
-                        placeholder="Enter your password"
+                        placeholder="T0TALLY_N0T_MY_PA55W0RD"
                       />
+                      <label className="auth-input-label">Nickname</label>
+                      <div className="relative">
+                        <UserIcon className="auth-input-icon" />
+                        <input
+                          className="input"
+                          value={formData.nickname}
+                          onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                          placeholder="MihanN1"
+                        />
+                      </div>
+                      <label className="auth-input-label">Tag</label>
+                      <div className="relative">
+                        <HashIcon className="auth-input-icon" />
+                        <input
+                          className="input"
+                          value={formData.tag}
+                          onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+                          placeholder="mihann1"
+                        />
+                      </div>
                     </div>
                   </div>
                   <button className="auth-btn" type="submit" disabled={isSigningUp}>

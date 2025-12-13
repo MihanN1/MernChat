@@ -116,6 +116,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Forwarding settings
 * Message links
 * Reactions
+* Answering
 
 ### **1.6.x — Referral System**
 

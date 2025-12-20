@@ -72,8 +72,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Account recovery
 * 2FA
 * Login with QR
-* Custom email domain
-* Email validation error (“Email does not exist”)
+* Custom  domain
+*  validation error (“ does not exist”)
 
 ### **1.1.x — Chats Update**
 
@@ -134,8 +134,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 * No “all users in the world” display
 * Blocking
 * Friend nicknames
-* Email receiving with Resend
-* Reporting
+* Email receiving with Resend(for reporting bugs)
+* Reporting(AND admin panel for banning the user and looking through reports)
 
 ### **1.9.x — Text Formatting**
 

@@ -72,7 +72,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Account recovery
 * 2FA
 * Login with QR
-* Custom  domain
+* Custom  domain(and a working server for it)
 *  validation error (“ does not exist”)
 
 ### **1.1.x — Chats Update**

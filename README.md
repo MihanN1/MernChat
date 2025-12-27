@@ -185,6 +185,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ### **2.5.x — Final Release Preparation**
 
 * Installer building
+* Well, A NAME FOR THIS PROJECT.
 * Final optimization
 * Post-production website (like Discord download page)
 * A hella lot of hotfixes because im a little stupid)

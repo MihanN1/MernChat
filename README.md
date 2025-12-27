@@ -45,8 +45,6 @@ This document outlines the structure, technology stack, update roadmap, contribu
 * MongoDB + Mongoose
 * Socket.IO server
 * JWT authentication
-* Email service (planned: own email domain, refactored email templates, improved account recovery emails)
-* Cookie management system overhaul
 
 ### **Infrastructure**
 
@@ -60,13 +58,25 @@ This document outlines the structure, technology stack, update roadmap, contribu
 * **Server** → Modular Express structure + versioned API + real-time socket engine
 * **Database** → Mongo models for users, chats, messages, notifications, friends
 
+### **.env THINGS**
+* **PORT:** the port backend app will run on if NODE_ENV === development.
+* **CLIENT_URL:** the link that the website will run on if NODE_ENV === development.
+* **NODE_ENV:** the mode of running the app. Development will run locally, production - normally).
+* **JWT_SECRET:** a string to generate a more or less secure token, just a key.
+* **RESEND_API_KEY:** an API key required for emailing to work.
+* **EMAIL_FROM:** the email address the emails are gonna be sent from.
+* **EMAIL_FROM_NAME:** the name on the letter.
+* **CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME:** the things cloudinary needs in order to connect to the website.
+* **ARCJET_KEY:** the key in order for the security functions to work properly.
+* **MONGO_URI:** the URI for connecting to MONGO database.
+
 ---
 
 ## 🚀 Update Structure (Roadmap Overview)
 
 Versions planned from **1.0.x** to **2.5.x**:
 
-### **1.0.x — Account System Update - BEING DEVELOPED RN**
+[### **1.0.x — Account System Update - BEING DEVELOPED RN**](https://github.com/MihanN1/MernChat/releases/tag/email-account-updates)
 
 * Refactor email system
 * Account recovery
@@ -117,6 +127,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Message links
 * Reactions
 * Answering
+* Cookie management system overhaul
 
 ### **1.6.x — Referral System**
 
@@ -165,7 +176,9 @@ Versions planned from **1.0.x** to **2.5.x**:
 
 ### **2.4.x — Application Build**
 
-* Desktop app
+* Desktop app(for Windows, Linux and MacOS)
+* Mobile app(both IOS and Android)
+* Mobile website design
 * Tray system
 * Notifications
 
@@ -174,6 +187,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Installer building
 * Final optimization
 * Post-production website (like Discord download page)
+* A hella lot of hotfixes because im a little stupid)
+* API function for customization
 
 ---
 

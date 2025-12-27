@@ -76,14 +76,14 @@ This document outlines the structure, technology stack, update roadmap, contribu
 
 Versions planned from **1.0.x** to **2.5.x**:
 
-[### **1.0.x — Account System Update - BEING DEVELOPED RN**](https://github.com/MihanN1/MernChat/releases/tag/email-account-updates)
+### **[1.0.x — Account System Update - BEING DEVELOPED RN](https://github.com/MihanN1/MernChat/releases/tag/email-account-updates)**
 
 * Refactor email system
 * Account recovery
 * 2FA
 * Login with QR
 * Custom  domain(and a working server for it)
-*  validation error (“ does not exist”)
+* Validation error (“ does not exist”)
 
 ### **1.1.x — Chats Update**
 
@@ -125,6 +125,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Links settings
 * Forwarding settings
 * Message links
+* Message search by filters
+* Message search by phrase
 * Reactions
 * Answering
 * Cookie management system overhaul

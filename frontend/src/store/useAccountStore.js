@@ -192,8 +192,9 @@ export const useAccountStore = create((set, get) => ({
             }
             if (endpoint === "/auth/update-profile") {
                 const res = await axiosInstance.post(endpoint, data);
-            }
-            const res = await axiosInstance.put(endpoint, data);
+            } else {  
+            const res = await axiosInstance.put(endpoint, data);  
+         }
             if (type === "general" && res.data) {
                 useAuthStore.setState((state) => ({  
                     authUser: { ...state.authUser, ...res.data }  

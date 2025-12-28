@@ -18,7 +18,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use(csrfMiddleware.generateTokenMiddleware());
-app.get('/api/csrf-token', csrfMiddleware.getTokenHandler());
+app.get('/api/csrf-token', CSRFMiddleware.getTokenHandler());
 
 const vulnerableEndpoints = [
   '/recover-email',

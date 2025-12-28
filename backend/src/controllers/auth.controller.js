@@ -435,18 +435,12 @@ export const verifyPasswordResetCode = async (req, res) => {
                     message: "If user exists, reset code has expired" 
                 });
             }
-            if (user.passwordResetCode.codeHash !== resetCode) {
+            const isCodeValid = await bcrypt.compare(resetCode, user.passwordResetCode.codeHash);  
+            if (!isCodeValid) {
                 return res.status(400).json({ 
                     message: "Invalid reset code" 
                 });
             }
-            if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {
-                return res.status(400).json({ 
-                    message: "No reset code found for this email" 
-                });
-            }
-            user.passwordResetCode = { codeHash: "", expiresAt: null };
-            await user.save();
             res.status(200).json({ 
                 message: "Reset code is valid."
             });

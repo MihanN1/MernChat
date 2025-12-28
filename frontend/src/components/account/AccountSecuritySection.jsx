@@ -55,7 +55,8 @@ function AccountSecuritySection() {
         setPendingNewEmail(securityData.newEmail);
         try {  
             await saveChanges("email");
-            if (!errors.general) {
+            const { errors: currentErrors } = useAccountStore.getState();  
+            if (!currentErrors.general) {
                 setEmailStep(2);
             }
         } catch (error) {

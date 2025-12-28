@@ -30,29 +30,20 @@ export const updateProfile = async (req, res) => {
         }
         if (tag !== undefined) {
             const formattedTag = tag.toLowerCase().replace(/\s/g, "");
-            const tagRegex = /^[a-z0-9.,\/?\-=+_]*$/;
-            
             if (formattedTag.length < 1 || formattedTag.length > 12) {
                 return res.status(400).json({ 
-                    message: "Tag must be 1-12 characters" 
-                });
-            }
-            if (!tagRegex.test(formattedTag)) {
-                return res.status(400).json({ 
-                    message: "Tag contains invalid characters" 
+                    message: "Tag must be 1-12 characters (after removing spaces)" 
                 });
             }
             const existingTag = await User.findOne({ 
                 tag: formattedTag, 
                 _id: { $ne: userId } 
             });
-            
             if (existingTag) {
                 return res.status(400).json({ 
                     message: "Tag is already taken" 
                 });
             }
-            
             updateData.tag = formattedTag;
         }
         if (profilePic !== undefined) {
@@ -119,6 +110,13 @@ export const updateProfile = async (req, res) => {
         ).select('-password');
         res.status(200).json(updatedUser);
     } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ message: messages.join(', ') });
+        }
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.tag) {
+            return res.status(400).json({ message: "Tag is already taken" });
+        }
         console.error("Update profile error:", error);
         res.status(500).json({ message: error.message });
     }
@@ -171,33 +169,29 @@ export const logout = (req,res) => {
     res.cookie("jwt","",{maxAge:0});
     res.status(200).json({message: "Logged out successfully"});
 };
-export const signup = async (req,res) => {
-    const {fullName, email, password, nickname, tag} = req.body
+export const signup = async (req, res) => {
+    const {fullName, email, password, nickname, tag} = req.body;
     try {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!fullName || !email || !password || !nickname || !tag) {
-            return res.status(400).json({message: "All fields are required"})
-        };
         const existingEmail = await User.findOne({email});
         if (existingEmail) return res.status(400).json({message: "Email already exists"});
         const formattedTag = tag.toLowerCase().replace(/\s/g, "");
         const existingTag = await User.findOne({tag: formattedTag});
         if (existingTag) return res.status(400).json({message: "Tag is already taken"});
+        if (!fullName || !email || !password || !nickname || !tag) {
+            return res.status(400).json({message: "All fields are required"});
+        };
         if (nickname.length < 3 || nickname.length > 20) {
-            return res.status(400).json({message: "Nickname must be 3-20 characters"})
+            return res.status(400).json({message: "Nickname must be 3-20 characters"});
         };
         if (tag.length < 1 || tag.length > 12) {
-            return res.status(400).json({message: "Tag must be 1-12 characters"})
-        };
-        const tagRegex = /^[a-z0-9.,\/?\-=+_]*$/;
-        if (!tagRegex.test(formattedTag)) {
-            return res.status(400).json({message: "Tag contains invalid characters"})
+            return res.status(400).json({message: "Tag must be 1-12 characters"});
         };
         if (password.length < 8) {
-            return res.status(400).json({message: "Password can't be less than 8 characters"})
+            return res.status(400).json({message: "Password can't be less than 8 characters"});
         };
         if (!emailRegex.test(email)) {
-            return res.status(400).json({message: "Invalid email format"})
+            return res.status(400).json({message: "Invalid email format"});
         };
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -240,6 +234,18 @@ export const signup = async (req,res) => {
             res.status(400).json({message: "Invalid user data"});
         };
     } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({message: messages.join(', ')});
+        }
+        if (error.code === 11000) {
+            if (error.keyPattern && error.keyPattern.tag) {
+                return res.status(400).json({message: "Tag is already taken"});
+            }
+            if (error.keyPattern && error.keyPattern.email) {
+                return res.status(400).json({message: "Email already exists"});
+            }
+        }
         console.log("Error in signup controller: ", error);
         res.status(500).json({message: "Internal server error"});
     }
@@ -255,16 +261,14 @@ export const sendRecoveryCode = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "No account found with this email" });
         }
-        if (!user.recoveryCode) {
-            user.recoveryCode = generateRecoveryCode();
-            await user.save();
-        }
+        const recoveryCode = generateRecoveryCode();
+        await user.setRecoveryCode(recoveryCode);
         // TODO: Actually send email with recovery code and destroy the console.log below
-        if (ENV.NODE_ENV === 'development') {  
-            console.log(`[DEV] Recovery code for ${email}: ${user.recoveryCode}`);  
+        if (ENV.NODE_ENV === 'development') {
+            console.log(`[DEV] Recovery code for ${email}: ${recoveryCode}`);
         }
         
-        res.status(200).json({ 
+        res.status(200).json({
             message: "Recovery code sent to your email",
         });
     } catch (error) {
@@ -287,7 +291,8 @@ export const verifyRecoveryCode = async (req, res) => {
                 message: "No account found with this email" 
             });
         }
-        if (user.recoveryCode !== recoveryCode.toUpperCase()) {
+        const isValid = await user.verifyRecoveryCode(recoveryCode.toUpperCase());  
+        if (!isValid) { 
             return res.status(400).json({ 
                 message: "Invalid recovery code" 
             });
@@ -305,26 +310,23 @@ export const sendNewEmailVerification = async (req, res) => {
     try {
         const { email, newEmail } = req.body;
         if (!email || !newEmail) {
-            return res.status(400).json({ 
-                message: "Both current and new email are required" 
+            return res.status(400).json({
+                message: "Both current and new email are required"
             });
         }
         const existingUser = await User.findOne({ email: newEmail });
         if (existingUser) {
-            return res.status(400).json({ 
-                message: "Email is already in use" 
+            return res.status(400).json({
+                message: "Email is already in use"
             });
         }
         const verificationCode = generateVerificationCode();
-        emailVerificationCodes.set(newEmail, {  
-            code: verificationCode,  
-            expiresAt: Date.now() + 10 * 60 * 1000
-        });  
+        await user.setEmailVerificationCode(verificationCode, newEmail);
         // TODO: Actually send email with verification code and destroy the console.log below
-        if (ENV.NODE_ENV === 'development') {  
-            console.log(`[DEV] Verification code for ${newEmail}: ${user.emailVerificationCode}`);  
+        if (ENV.NODE_ENV === 'development') {
+            console.log(`[DEV] Verification code for ${newEmail}: ${verificationCode}`);
         }
-        res.status(200).json({ 
+        res.status(200).json({
             message: "Verification code sent to new email",
         });
     } catch (error) {
@@ -335,7 +337,6 @@ export const sendNewEmailVerification = async (req, res) => {
 export const recoverEmail = async (req, res) => {
     try {
         const { email, verificationCode, recoveryCode } = req.body;
-        
         if (!email || !verificationCode || !recoveryCode) {
             return res.status(400).json({ 
                 message: "All fields are required" 
@@ -347,36 +348,17 @@ export const recoverEmail = async (req, res) => {
                 message: "User not found" 
             });
         }
-        if (!user.recoveryCodeHash) {
-            return res.status(400).json({ 
-                message: "No recovery code found for this account" 
-            });
-        }
         const isRecoveryCodeValid = await bcrypt.compare(recoveryCode, user.recoveryCodeHash);
         if (!isRecoveryCodeValid) {
             return res.status(400).json({ 
                 message: "Invalid recovery code" 
             });
         }
-        if (!user.emailVerificationCode || !user.emailVerificationCode.codeHash) {
-            return res.status(400).json({ 
-                message: "No verification code found. Please request a new one." 
-            });
-        }
-        if (user.emailVerificationCode.expiresAt < new Date()) {
-            user.emailVerificationCode = { codeHash: "", expiresAt: null, newEmail: "" };
-            await user.save();
-            return res.status(400).json({ 
-                message: "Verification code has expired. Please request a new one." 
-            });
-        }
-        const isVerificationCodeValid = await bcrypt.compare(
-            verificationCode, 
-            user.emailVerificationCode.codeHash
-        );
+        // Not sure about the logic, but the idea is that after inputted recovery code is valid, we send verification code, and if it is valid too, we change email.
+        const isVerificationCodeValid = await user.verifyEmailVerificationCode(verificationCode);
         if (!isVerificationCodeValid) {
             return res.status(400).json({ 
-                message: "Invalid verification code" 
+                message: "Invalid or expired verification code" 
             });
         }
         const newEmail = user.emailVerificationCode.newEmail;
@@ -394,19 +376,8 @@ export const recoverEmail = async (req, res) => {
         user.email = newEmail;
         const newRecoveryCode = generateRecoveryCode();
         user.recoveryCodeHash = await bcrypt.hash(newRecoveryCode, 10);
-        user.emailVerificationCode = { codeHash: "", expiresAt: null, newEmail: "" };
+        await user.clearEmailVerificationCode();
         await user.save();
-        try {
-            await sendRecoveryCodeEmail(
-                newEmail,
-                user.fullName,
-                ENV.CLIENT_URL,
-                newRecoveryCode
-            );
-        } catch (emailError) {
-            console.error("Failed to send new recovery code email:", emailError);
-        }
-        
         res.status(200).json({ 
             message: "Email updated successfully. Check your new email for the updated recovery code."
         });
@@ -418,7 +389,7 @@ export const recoverEmail = async (req, res) => {
 
 export const sendPasswordResetCode = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email } = req.body; 
         if (!email) {
             return res.status(400).json({ message: "Email is required" });
         }
@@ -427,18 +398,14 @@ export const sendPasswordResetCode = async (req, res) => {
             return res.status(404).json({ message: "No account found with this email" });
         }
         const resetCode = generateVerificationCode();
+        const resetCodeHash = await bcrypt.hash(resetCode, 10);
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
         user.passwordResetCode = {
-            code: resetCode,
+            codeHash: resetCodeHash,
             expiresAt: expiresAt
         };
-        
         await user.save();
-        // TODO: Send email with reset code
-        if (ENV.NODE_ENV === 'development') {
-            console.log(`[DEV] Password reset code for ${email}: ${resetCode}`);
-        }
-        
+        // TODO: actually send password reset code
         res.status(200).json({ 
             message: "Password reset code sent to your email"
         });

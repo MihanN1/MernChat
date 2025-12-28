@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MailIcon, ShieldIcon, ArrowRightIcon, LoaderIcon, CheckCircleIcon, ArrowLeftIcon } from "lucide-react";
 import { useAccountStore } from "../../store/useAccountStore";
 import { useNavigate } from "react-router-dom";
 
 function RecoveryEmail() {
+    const timeoutRef = useRef(null);
     const { recoveryData, recoveryStep, isRecovering, isSendingRecoveryCode, recoveryErrors, 
             updateRecoveryData, sendRecoveryCode, verifyRecoveryCode, 
             sendEmailVerification, updateEmailViaRecovery, setRecoveryStep, resetRecovery } = useAccountStore();
@@ -21,6 +22,13 @@ function RecoveryEmail() {
         e.preventDefault();
         await sendEmailVerification(recoveryData.newEmail);
     };
+    useEffect(() => {  
+        return () => {  
+            if (timeoutRef.current) {  
+                clearTimeout(timeoutRef.current);  
+            }  
+        };  
+    }, []);  
     const handleVerificationSubmit = async (e) => {
         e.preventDefault();
         if (!recoveryData.email || !recoveryData.newEmail || !recoveryData.newEmailVerificationCode || !recoveryData.recoveryCode) {
@@ -36,7 +44,7 @@ function RecoveryEmail() {
         
         if (success) {
             setSuccess(true);
-            setTimeout(() => {
+            timeoutRef.current = setTimeout(() => {
                 resetRecovery();
                 navigate("/login");
             }, 3000);

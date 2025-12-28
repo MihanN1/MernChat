@@ -158,11 +158,9 @@ export const useAccountStore = create((set, get) => ({
             
             const res = await axiosInstance.put(endpoint, data);
             if (type === "general" && res.data) {
-                const authStore = useAuthStore.getState();
-                authStore.authUser = {
-                    ...authStore.authUser,
-                    ...res.data
-                };
+                useAuthStore.setState((state) => ({  
+                    authUser: { ...state.authUser, ...res.data }  
+                }));
             }
             if (type === "password") {
                 set(state => ({

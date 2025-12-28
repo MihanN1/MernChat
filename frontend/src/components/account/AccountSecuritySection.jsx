@@ -8,7 +8,8 @@ import {
   EyeOffIcon,
   SaveIcon,
   LoaderIcon,
-  RefreshCwIcon
+  RefreshCwIcon,  
+  CheckCircleIcon
 } from "lucide-react";
 import { useAccountStore } from "../../store/useAccountStore";
 
@@ -51,8 +52,14 @@ function AccountSecuritySection() {
             return;
         }
         setPendingNewEmail(securityData.newEmail);
-        await saveChanges("email");
-        setEmailStep(2);
+        try {  
+            await saveChanges("email");
+            if (!errors.general) {
+                setEmailStep(2);
+            }
+        } catch (error) {
+            // TODO: Error handling here
+        }  
     };
 
     const handleEmailChangeStep2 = async (e) => {

@@ -119,11 +119,10 @@ export const useAccountStore = create((set, get) => ({
                 verificationCode: verificationCode,
                 recoveryCode: recoveryCode
             });
-            const authStore = useAuthStore.getState();
-            authStore.authUser = {
-                ...authStore.authUser,
-                email: securityData.newEmail
-            };  
+            const { securityData } = get();  
+            useAuthStore.setState((state) => ({  
+                authUser: { ...state.authUser, email: securityData.newEmail }  
+            }));
             set(state => ({
                 hasChanges: false,
                 securityData: {
@@ -174,9 +173,8 @@ export const useAccountStore = create((set, get) => ({
                     
                 case "email":
                     endpoint = "/auth/send-new-email-verification";
-                    method = "POST";
                     data = {
-                        email: securityData.email,
+                        email: securityData.currentEmail,
                         newEmail: securityData.newEmail
                     };
                     break;
@@ -192,7 +190,9 @@ export const useAccountStore = create((set, get) => ({
                 default:
                     throw new Error("Invalid save type");
             }
-            
+            if (endpoint === "/auth/update-profile") {
+                const res = await axiosInstance.post(endpoint, data);
+            }
             const res = await axiosInstance.put(endpoint, data);
             if (type === "general" && res.data) {
                 useAuthStore.setState((state) => ({  

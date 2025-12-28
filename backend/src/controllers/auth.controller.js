@@ -414,12 +414,46 @@ export const sendPasswordResetCode = async (req, res) => {
         res.status(500).json({ message: "Failed to send reset code" });
     }
 };
-
+export const verifyPasswordResetCode = async (req, res) => {
+    try {
+        const { email, resetCode } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ 
+                message: "User not found" 
+            });
+        }
+        if (user.passwordResetCode.expiresAt < new Date()) {
+            user.passwordResetCode = { code: "", expiresAt: null };
+            await user.save();
+            return res.status(400).json({ 
+                message: "Reset code has expired" 
+            });
+        }
+        if (user.passwordResetCode.code !== resetCode) {
+            return res.status(400).json({ 
+                message: "Invalid reset code" 
+            });
+        }
+        if (!user.passwordResetCode || !user.passwordResetCode.code) {
+            return res.status(400).json({ 
+                message: "No reset code found for this email" 
+            });
+        }
+        user.passwordResetCode = { code: "", expiresAt: null };
+        await user.save();
+        res.status(200).json({ 
+            message: "Reset code is valid."
+        });
+    } catch (error) {
+        console.error("Reset password error:", error);
+        res.status(500).json({ message: "Failed to validate password reset code" });
+    }
+};
 export const resetPassword = async (req, res) => {
     try {
-        const { email, resetCode, newPassword } = req.body;
-        
-        if (!email || !resetCode || !newPassword) {
+        const { email, newPassword } = req.body;
+        if (!email || !newPassword) {
             return res.status(400).json({ 
                 message: "All fields are required" 
             });
@@ -433,23 +467,6 @@ export const resetPassword = async (req, res) => {
         if (!user) {
             return res.status(404).json({ 
                 message: "User not found" 
-            });
-        }
-        if (!user.passwordResetCode || !user.passwordResetCode.code) {
-            return res.status(400).json({ 
-                message: "No reset code found for this email" 
-            });
-        }
-        if (user.passwordResetCode.expiresAt < new Date()) {
-            user.passwordResetCode = { code: "", expiresAt: null };
-            await user.save();
-            return res.status(400).json({ 
-                message: "Reset code has expired" 
-            });
-        }
-        if (user.passwordResetCode.code !== resetCode) {
-            return res.status(400).json({ 
-                message: "Invalid reset code" 
             });
         }
         const salt = await bcrypt.genSalt(10);

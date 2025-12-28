@@ -101,7 +101,7 @@ export const useAccountStore = create((set, get) => ({
     sendVerificationCode: async (email) => {
         set({ isSendingCode: true });
         try {
-            const res = await axiosInstance.post("/auth/send-verification-code", { email });
+            const res = await axiosInstance.post("/auth/send-new-email-verification", { email });
             toast.success(res.data.message);
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to send code");
@@ -137,7 +137,7 @@ export const useAccountStore = create((set, get) => ({
                     break;
                     
                 case "email":
-                    endpoint = "/auth/send-verification-code";
+                    endpoint = "/auth/send-new-email-verification";
                     data = {
                         newEmail: securityData.newEmail,
                         verificationCode: securityData.verificationCode

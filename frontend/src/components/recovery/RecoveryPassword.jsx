@@ -4,7 +4,7 @@ import { useAccountStore } from "../../store/useAccountStore";
 import { useNavigate } from "react-router-dom";
 
 function RecoveryPassword() {
-    const { recoveryData, recoveryStep, isRecovering, isSendingRecoveryCode, recoveryErrors, 
+    const { recoveryData, recoveryStep, isRecovering, isSendingRecoveryCode, recoveryErrors, verifyPasswordResetCode, 
             updateRecoveryData, sendPasswordResetCode, resetPassword, setRecoveryStep, resetRecovery } = useAccountStore();
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);

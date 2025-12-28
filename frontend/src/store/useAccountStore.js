@@ -53,6 +53,25 @@ export const useAccountStore = create((set, get) => ({
             hasChanges: true
         }));
     },
+
+    verifyPasswordResetCode: async (email, resetCode) => {
+        set({ isRecovering: true, recoveryErrors: {} });
+        try {
+            await axiosInstance.post("/auth/verify-password-reset-code", { email, resetCode });
+            toast.success("Reset code verified.");
+            set(state => ({
+                recoveryStep: { ...state.recoveryStep, password: 3 }
+            }));
+            return true;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "Invalid reset code.";
+            set({ recoveryErrors: { resetCode: errorMessage } });
+            toast.error(errorMessage);
+            return false;
+        } finally {
+            set({ isRecovering: false });
+        }
+    },
     
     updateSecurityField: (field, value) => {
         set(state => ({

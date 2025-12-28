@@ -1,26 +1,66 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-    email:{
+    fullName: {
         type: String,
-        required: true,
+        required: true
+    },
+    nickname: {
+        type: String,
+        default: "",
+        minlength: 3,
+        maxlength: 20
+    },
+    tag: {
+        type: String,
+        default: "",
         unique: true,
+        minlength: 1,
+        maxlength: 12,
+        lowercase: true,
+        validate: {
+            validator: function(v) {
+                return /^[a-z0-9.,\/?\-=+_]*$/.test(v);
+            },
+            message: props => `${props.value} contains invalid characters`
+        }
     },
-    fullName:{
+    email: {
         type: String,
         required: true,
+        unique: true
     },
-    password:{
+    password: {
         type: String,
-        required: true,
-        minlength: 8,
+        required: true
     },
-    profilePic:{
+    profilePic: {
         type: String,
         default: ""
     },
-    }, 
-    {timestamps: true}
-);
+    twoFactorEnabled: {
+        type: Boolean,
+        default: false
+    },
+    qrLoginEnabled: {
+        type: Boolean,
+        default: false
+    },
+    recoveryCode: {
+        type: String,
+        default: ""
+    },
+    passwordResetCode: {
+        code: {
+            type: String,
+            default: ""
+        },
+        expiresAt: {
+            type: Date,
+            default: null
+        }
+    }
+}, { timestamps: true });
+
 const User = mongoose.model("User", userSchema);
 export default User;

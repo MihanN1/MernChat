@@ -13,8 +13,6 @@ function EmailChangePage() {
     nickname: "",
     tag: "",
   };
-
-  // If you passed state from recovery, merge it (optional)
   const passed = location.state || {};
   const [form, setForm] = useState({
     ...initialState,
@@ -22,14 +20,12 @@ function EmailChangePage() {
     nickname: passed.nickname || "",
     tag: passed.tag || "",
   });
-
   const submit = (e) => {
     e.preventDefault();
     console.log("CHANGE EMAIL DATA →", form);
-    // After a successful change you might want to redirect to login
-    // For now we keep the user on the page and provide a button below to go back to login.
+    // TODO: make it redirect user to login
+    // TODO: check if email is real
   };
-
   return (
     <div className="w-full flex items-center justify-center p-4 bg-slate-900">
       <div className="relative w-full max-w-4xl h-[680px]">

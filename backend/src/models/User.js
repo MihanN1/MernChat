@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    recoveryCode: {
+    recoveryCodeHash: {
         type: String,
         default: ""
     },
@@ -61,6 +61,15 @@ const userSchema = new mongoose.Schema({
         }
     }
 }, { timestamps: true });
+
+userSchema.methods.verifyRecoveryCode = async function(recoveryCode) {
+    return await bcrypt.compare(recoveryCode, this.recoveryCodeHash);
+};
+
+userSchema.methods.setRecoveryCode = async function(recoveryCode) {
+    this.recoveryCodeHash = await bcrypt.hash(recoveryCode, 10);
+    return this.save();
+};
 
 const User = mongoose.model("User", userSchema);
 export default User;

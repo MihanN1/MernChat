@@ -123,8 +123,7 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-const emailVerificationCodes = new Map();  
-  
+const emailVerificationCodes = new Map();
 const verifyEmailCode = (email, code) => {  
     const stored = emailVerificationCodes.get(email);  
     if (!stored) return false;  
@@ -133,7 +132,7 @@ const verifyEmailCode = (email, code) => {
         return false;  
     }  
     return stored.code === code;  
-};  
+};
 const generateRecoveryCode = () => {
     return crypto.randomBytes(6).toString('hex').toUpperCase();
 };
@@ -207,13 +206,14 @@ export const signup = async (req,res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const recoveryCode = generateRecoveryCode();
+        const recoveryCodeHash = await bcrypt.hash(recoveryCode, 10);
         const newUser = new User({
             fullName,
             email,
             password: hashedPassword,
             nickname,
             tag: formattedTag,
-            recoveryCode,
+            recoveryCodeHash,
             twoFactorEnabled: false,
             qrLoginEnabled: false
         });
@@ -264,7 +264,9 @@ export const sendRecoveryCode = async (req, res) => {
             await user.save();
         }
         // TODO: Actually send email with recovery code and destroy the console.log below
-        console.log(`Recovery code for ${email}: ${user.recoveryCode}`);
+        if (ENV.NODE_ENV === 'development') {  
+            console.log(`[DEV] Recovery code for ${email}: ${user.recoveryCode}`);  
+        }
         
         res.status(200).json({ 
             message: "Recovery code sent to your email",
@@ -318,12 +320,16 @@ export const sendNewEmailVerification = async (req, res) => {
             });
         }
         const verificationCode = generateVerificationCode();
+        emailVerificationCodes.set(newEmail, {  
+            code: verificationCode,  
+            expiresAt: Date.now() + 10 * 60 * 1000
+        });  
         // TODO: Actually send email with verification code and destroy the console.log below
-        console.log(`Verification code for ${newEmail}: ${verificationCode}`);
-        // TODO: STORE THIS WITH TIMER AS NOW ITS NOT F-ING SAFE YOU IDIOT! YES, IM SPEAKING TO MYSELF!
+        if (ENV.NODE_ENV === 'development') {  
+            console.log(`[DEV] Verification code for ${newEmail}: ${user.emailVerificationCode}`);  
+        }
         res.status(200).json({ 
             message: "Verification code sent to new email",
-            code: verificationCode
         });
     } catch (error) {
         console.error("Send new email verification error:", error);
@@ -332,8 +338,9 @@ export const sendNewEmailVerification = async (req, res) => {
 };
 export const recoverEmail = async (req, res) => {
     try {
-        const { email, newEmail, verificationCode, recoveryCode } = req.body;
-        if (!email || !newEmail || !verificationCode || !recoveryCode) {
+        const { email, verificationCode, recoveryCode } = req.body;
+        
+        if (!email || !verificationCode || !recoveryCode) {
             return res.status(400).json({ 
                 message: "All fields are required" 
             });
@@ -344,9 +351,42 @@ export const recoverEmail = async (req, res) => {
                 message: "User not found" 
             });
         }
-        if (user.recoveryCode !== recoveryCode.toUpperCase()) {
+        if (!user.recoveryCodeHash) {
+            return res.status(400).json({ 
+                message: "No recovery code found for this account" 
+            });
+        }
+        const isRecoveryCodeValid = await bcrypt.compare(recoveryCode, user.recoveryCodeHash);
+        if (!isRecoveryCodeValid) {
             return res.status(400).json({ 
                 message: "Invalid recovery code" 
+            });
+        }
+        if (!user.emailVerificationCode || !user.emailVerificationCode.codeHash) {
+            return res.status(400).json({ 
+                message: "No verification code found. Please request a new one." 
+            });
+        }
+        if (user.emailVerificationCode.expiresAt < new Date()) {
+            user.emailVerificationCode = { codeHash: "", expiresAt: null, newEmail: "" };
+            await user.save();
+            return res.status(400).json({ 
+                message: "Verification code has expired. Please request a new one." 
+            });
+        }
+        const isVerificationCodeValid = await bcrypt.compare(
+            verificationCode, 
+            user.emailVerificationCode.codeHash
+        );
+        if (!isVerificationCodeValid) {
+            return res.status(400).json({ 
+                message: "Invalid verification code" 
+            });
+        }
+        const newEmail = user.emailVerificationCode.newEmail;
+        if (!newEmail) {
+            return res.status(400).json({ 
+                message: "No new email associated with this verification code" 
             });
         }
         const existingUser = await User.findOne({ email: newEmail });
@@ -355,15 +395,24 @@ export const recoverEmail = async (req, res) => {
                 message: "Email is already in use" 
             });
         }
-        // TODO: Verify the verification code (this would come from your email service)
         user.email = newEmail;
         const newRecoveryCode = generateRecoveryCode();
-        user.recoveryCode = newRecoveryCode;
+        user.recoveryCodeHash = await bcrypt.hash(newRecoveryCode, 10);
+        user.emailVerificationCode = { codeHash: "", expiresAt: null, newEmail: "" };
         await user.save();
-        // TODO: Send new recovery code to the new email
-        console.log(`New recovery code for ${newEmail}: ${newRecoveryCode}`);
+        try {
+            await sendRecoveryCodeEmail(
+                newEmail,
+                user.fullName,
+                ENV.CLIENT_URL,
+                newRecoveryCode
+            );
+        } catch (emailError) {
+            console.error("Failed to send new recovery code email:", emailError);
+        }
+        
         res.status(200).json({ 
-            message: "Email updated successfully. A new recovery code has been sent to your new email.",
+            message: "Email updated successfully. Check your new email for the updated recovery code."
         });
     } catch (error) {
         console.error("Recover email error:", error);
@@ -390,7 +439,9 @@ export const sendPasswordResetCode = async (req, res) => {
         
         await user.save();
         // TODO: Send email with reset code
-        console.log(`Password reset code for ${email}: ${resetCode}`);
+        if (ENV.NODE_ENV === 'development') {
+            console.log(`[DEV] Password reset code for ${email}: ${resetCode}`);
+        }
         
         res.status(200).json({ 
             message: "Password reset code sent to your email"

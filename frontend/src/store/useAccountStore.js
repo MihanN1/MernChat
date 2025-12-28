@@ -95,12 +95,14 @@ export const useAccountStore = create((set, get) => ({
         set({ isSaving: true, errors: {} });
         
         try {
-            let dataToSend = {};
+            let endpoint = "";
+            let data = {};
             const { userData, securityData } = get();
             
             switch (type) {
                 case "general":
-                    dataToSend = {
+                    endpoint = "/auth/update-profile";
+                    data = {
                         nickname: userData.nickname,
                         tag: userData.tag,
                         profilePic: userData.profilePic
@@ -108,33 +110,41 @@ export const useAccountStore = create((set, get) => ({
                     break;
                     
                 case "password":
-                    dataToSend = {
+                    endpoint = "/auth/change-password";
+                    data = {
                         currentPassword: securityData.currentPassword,
                         newPassword: securityData.newPassword
                     };
                     break;
                     
                 case "email":
-                    dataToSend = {
+                    endpoint = "/auth/send-verification-code";
+                    data = {
                         newEmail: securityData.newEmail,
                         verificationCode: securityData.verificationCode
                     };
                     break;
                     
                 case "security_toggles":
-                    dataToSend = {
-                        securitySettings: securityData.toggles
+                    endpoint = "/auth/security-settings";
+                    data = {
+                        twoFactor: securityData.toggles.twoFactor,
+                        qrLogin: securityData.toggles.qrLogin
                     };
                     break;
+                    
+                default:
+                    throw new Error("Invalid save type");
             }
             
-            const res = await axiosInstance.put("/auth/update-profile", dataToSend);
-
-            const authStore = useAuthStore.getState();
-            if (type === "general" || type === "email" || type === "security_toggles") {
-                useAuthStore.setState({ authUser: res.data });
+            const res = await axiosInstance.put(endpoint, data);
+            if (type === "general" && res.data) {
+                const authStore = useAuthStore.getState();
+                authStore.authUser = {
+                    ...authStore.authUser,
+                    ...res.data
+                };
             }
-
             if (type === "password") {
                 set(state => ({
                     hasChanges: false,
@@ -145,20 +155,12 @@ export const useAccountStore = create((set, get) => ({
                         confirmPassword: ""
                     }
                 }));
-            } else if (type === "email") {
-                set(state => ({
-                    hasChanges: false,
-                    securityData: {
-                        ...state.securityData,
-                        currentEmail: "",
-                        newEmail: "",
-                        verificationCode: ""
-                    }
-                }));
+            } else if (type === "security_toggles") {
+                set({ hasChanges: false });
             } else {
                 set({ hasChanges: false });
             }
-            
+
             toast.success("Settings updated successfully!");
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to update settings";
@@ -269,18 +271,19 @@ export const useAccountStore = create((set, get) => ({
             set({ isSendingRecoveryCode: false });
         }
     },
-    updateEmailViaRecovery: async (email, newEmail, verificationCode) => {
+    updateEmailViaRecovery: async (email, newEmail, verificationCode, recoveryCode) => {
         set({ isRecovering: true, recoveryErrors: {} });
         try {
             await axiosInstance.post("/auth/recover-email", { 
                 email, 
                 newEmail, 
-                verificationCode 
+                verificationCode,
+                recoveryCode 
             });
-            toast.success("Email updated successfully.");
-            return true; // Success
+            toast.success("Email updated successfully! Check your new email for the updated recovery code.");
+            return true;
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to update email.";
+            const errorMessage = error.response?.data?.message || "Failed to update email";
             set({ recoveryErrors: { general: errorMessage } });
             toast.error(errorMessage);
             return false;

@@ -23,10 +23,15 @@ function RecoveryEmail() {
     };
     const handleVerificationSubmit = async (e) => {
         e.preventDefault();
+        if (!recoveryData.email || !recoveryData.newEmail || !recoveryData.newEmailVerificationCode || !recoveryData.recoveryCode) {
+            alert("Please fill in all required fields");
+            return;
+        }
         const success = await updateEmailViaRecovery(
             recoveryData.email,
             recoveryData.newEmail,
-            recoveryData.newEmailVerificationCode
+            recoveryData.newEmailVerificationCode,
+            recoveryData.recoveryCode
         );
         
         if (success) {

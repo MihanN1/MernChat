@@ -15,7 +15,7 @@ function AccountPage() {
       setUserData(authUser);
     }
     setActiveSetting(null);
-  }, [setUserData, setActiveSetting]);
+  }, [authUser, setUserData, setActiveSetting]);
 
   return (
     <div className="w-full max-w-6xl h-[800px]">

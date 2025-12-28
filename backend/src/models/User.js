@@ -7,13 +7,13 @@ const userSchema = new mongoose.Schema({
     },
     nickname: {
         type: String,
-        default: "",
+        required: true,
         minlength: 3,
         maxlength: 20
     },
     tag: {
         type: String,
-        default: "",
+        required: true,
         unique: true,
         minlength: 1,
         maxlength: 12,

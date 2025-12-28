@@ -16,8 +16,10 @@ function RecoveryPassword() {
     };
     const handleResetCodeSubmit = async (e) => {
         e.preventDefault();
-        // Move to password step
-        setRecoveryStep("password", 3);
+        const isValid = await verifyPasswordResetCode(recoveryData.email, recoveryData.resetCode);
+        if (isValid) {
+            setRecoveryStep("password", 3);
+        }
     };
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();

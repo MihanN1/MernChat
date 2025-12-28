@@ -171,10 +171,10 @@ export const useAccountStore = create((set, get) => ({
     
     resetChanges: () => {
         const { originalData } = get();
-        set({
+        set((state) => ({
             userData: JSON.parse(JSON.stringify(originalData)),
             securityData: {
-                ...get().securityData,
+                ...state.securityData,
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
@@ -184,7 +184,7 @@ export const useAccountStore = create((set, get) => ({
             },
             hasChanges: false,
             errors: {}
-        });
+        }));
     },
     activeRecovery: null,
     recoveryData: {
@@ -247,6 +247,8 @@ export const useAccountStore = create((set, get) => ({
             }));
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Invalid recovery code.";
+            set({ recoveryErrors: { recoveryCode: errorMessage } });
+            toast.error(errorMessage);
         } finally {
             set({ isRecovering: false });
         }

@@ -65,8 +65,8 @@ function AccountSecuritySection() {
     
     if (!securityData.newPassword) {
       newErrors.newPassword = "New password is required";
-    } else if (securityData.newPassword.length < 6) {
-      newErrors.newPassword = "Password must be at least 6 characters";
+    } else if (securityData.newPassword.length < 8) {
+      newErrors.newPassword = "Password must be at least 8 characters";
     }
     
     if (securityData.newPassword !== securityData.confirmPassword) {
@@ -469,6 +469,8 @@ function AccountSecuritySection() {
                 <button
                   type="button"
                   onClick={() => handleToggle("twoFactor")}
+                  role="switch"
+                  aria-checked={securityData.toggles?.twoFactor}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     securityData.toggles?.twoFactor ? "bg-cyan-500" : "bg-slate-600"
                   }`}
@@ -495,6 +497,8 @@ function AccountSecuritySection() {
                 <button
                   type="button"
                   onClick={() => handleToggle("qrLogin")}
+                  role="switch"
+                  aria-checked={securityData.toggles?.qrLogin}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     securityData.toggles?.qrLogin ? "bg-cyan-500" : "bg-slate-600"
                   }`}

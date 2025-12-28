@@ -1,4 +1,4 @@
-export function createWelcomeEmailTemplate(name, clientURL //TODO: Make clientURL, resetURL and resetUrl useful
+export function createWelcomeEmailTemplate(name, recoveryCode, clientURL //TODO: Make clientURL, resetURL and resetUrl useful
   ) {
   return `
   <!DOCTYPE html>
@@ -19,6 +19,7 @@ export function createWelcomeEmailTemplate(name, clientURL //TODO: Make clientUR
       <div style="background-color: #0f172a; padding: 32px;">
         <p style="font-size: 18px; color: #38bdf8; margin-top: 0;"><strong>Hello ${name},</strong></p>
         <p>Welcome to <strong>MernChat</strong> — your private, fast, and modern messaging platform where you can connect anytime, anywhere.</p>
+        <p>This is your recovery code, save it for recovery reasons: ${recoveryCode}</p>
 
         <div style="background-color: #1e293b; padding: 20px; border-radius: 10px; border-left: 4px solid #38bdf8; margin: 24px 0;">
           <p style="margin: 0 0 12px 0;"><strong>Here's what you can do inside MernChat:</strong></p>
@@ -53,7 +54,7 @@ export function createWelcomeEmailTemplate(name, clientURL //TODO: Make clientUR
   </html>
   `;
 };
-export function createPasswordResetTemplate(name, resetURL) {
+export function createPasswordResetTemplate(name, resetURL, expiryMinutes = 60) {
   `
   <!doctype html>
   <html>
@@ -73,7 +74,7 @@ export function createPasswordResetTemplate(name, resetURL) {
     <div class="container">
       <h1>Password reset request</h1>
       <p>Hello ${name},</p>
-      <p>We received a request to reset your password. Click the button below to set a new password. This link will expire in {{expiryMinutes}} minutes.</p>
+      <p>We received a request to reset your password. Click the button below to set a new password. This link will expire in ${expiryMinutes} minutes.</p>
 
       <a href="${resetURL}" class="btn primary">Reset Password</a>
 

@@ -52,6 +52,12 @@ function AccountGeneralSection() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const MAX_SIZE = 5 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        setErrors({ ...errors, profilePic: "File size must be less than 5MB" });
+        return;
+      }
+
       if (errors.profilePic) {
         setErrors({ ...errors, profilePic: "" });
       }
@@ -100,13 +106,6 @@ function AccountGeneralSection() {
 
   const handleCancel = () => {
     resetChanges();
-    if (userData) {
-      setLocalData({
-        nickname: userData.nickname || "",
-        tag: userData.tag || "",
-      });
-      setPreviewImage(userData.profilePic || "");
-    }
   };
 
   if (!userData) {

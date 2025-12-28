@@ -23,8 +23,6 @@ function EmailChangePage() {
   const submit = (e) => {
     e.preventDefault();
     console.log("CHANGE EMAIL DATA →", form);
-    // TODO: make it redirect user to login
-    // TODO: check if email is real
   };
   return (
     <div className="w-full flex items-center justify-center p-4 bg-slate-900">

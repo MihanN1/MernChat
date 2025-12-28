@@ -64,7 +64,7 @@ export const useAuthStore = create((set) => ({
             get().disconnectSocket();
         } catch (error) {
             toast.error("Error logging out");
-            console.log("Logout error:", logout);
+            console.log("Logout error:", error);
         }
     },
     updateProfile: async(data) => {

@@ -127,7 +127,7 @@ const generateRecoveryCode = () => {
     return crypto.randomBytes(6).toString('hex').toUpperCase();
 };
 const generateVerificationCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return crypto.randomInt(100000, 1000000).toString();
 };
 export const login = async (req,res) => {
     const {identifier, password} = req.body
@@ -165,14 +165,14 @@ export const signup = async (req,res) => {
     const {fullName, email, password, nickname, tag} = req.body
     try {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!fullName || !email || !password || !nickname || !tag) {
+            return res.status(400).json({message: "All fields are required"})
+        };
         const existingEmail = await User.findOne({email});
         if (existingEmail) return res.status(400).json({message: "Email already exists"});
         const formattedTag = tag.toLowerCase().replace(/\s/g, "");
         const existingTag = await User.findOne({tag: formattedTag});
         if (existingTag) return res.status(400).json({message: "Tag is already taken"});
-        if (!fullName || !email || !password || !nickname || !tag) {
-            return res.status(400).json({message: "All fields are required"})
-        };
         if (nickname.length < 3 || nickname.length > 20) {
             return res.status(400).json({message: "Nickname must be 3-20 characters"})
         };
@@ -223,8 +223,7 @@ export const signup = async (req,res) => {
                 tag: newUser.tag,
                 profilePic: newUser.profilePic,
                 twoFactorEnabled: newUser.twoFactorEnabled,
-                qrLoginEnabled: newUser.qrLoginEnabled,
-                recoveryCode: recoveryCode
+                qrLoginEnabled: newUser.qrLoginEnabled
             });
         } else {
             res.status(400).json({message: "Invalid user data"});

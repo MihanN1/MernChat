@@ -14,19 +14,17 @@ import { useAccountStore } from "../../store/useAccountStore";
 
 function AccountSecuritySection() {
   const { 
-    securityData,
-    updateSecurityField,
-    updateSecurityToggle,
-    saveChanges,
-    resetChanges,
-    isSaving,
-    completeEmailChange,
-    hasChanges,
-    errors,
-    setErrors,
-    sendVerificationCode,
-    isSendingCode
-  } = useAccountStore();
+        securityData,
+        updateSecurityField,
+        updateSecurityToggle,
+        saveChanges,
+        verifyAndUpdateEmail,
+        resetChanges,
+        isSaving,
+        hasChanges,
+        errors,
+        setErrors
+    } = useAccountStore();
   
   const [showPasswords, setShowPasswords] = useState({
     current: false,
@@ -36,6 +34,7 @@ function AccountSecuritySection() {
   const [activeTab, setActiveTab] = useState("password");
   const [emailStep, setEmailStep] = useState(1);
   const [emailSuccess, setEmailSuccess] = useState(false);
+  const [pendingNewEmail, setPendingNewEmail] = useState("");
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     updateSecurityField(name, value);
@@ -51,6 +50,7 @@ function AccountSecuritySection() {
             setErrors({ ...errors, newEmail: "Please enter a valid email" });
             return;
         }
+        setPendingNewEmail(securityData.newEmail);
         await saveChanges("email");
         setEmailStep(2);
     };
@@ -65,7 +65,7 @@ function AccountSecuritySection() {
             });
             return;
         }
-        const success = await completeEmailChange(
+        const success = await verifyAndUpdateEmail(
             securityData.verificationCode,
             securityData.recoveryCode
         );
@@ -75,6 +75,7 @@ function AccountSecuritySection() {
             setTimeout(() => {
                 setEmailStep(1);
                 setEmailSuccess(false);
+                setPendingNewEmail("");
                 setActiveTab("password");
             }, 3000);
         }
@@ -83,8 +84,14 @@ function AccountSecuritySection() {
     const handleCancelEmailChange = () => {
         setEmailStep(1);
         setEmailSuccess(false);
+        setPendingNewEmail("");
         setErrors({});
         resetChanges();
+    };
+
+    const handleBackToStep1 = () => {
+        setEmailStep(1);
+        updateSecurityField("newEmail", pendingNewEmail);
     };
 
   const handleToggle = (toggleName) => {
@@ -400,6 +407,23 @@ function AccountSecuritySection() {
                             </div>
                         ) : (
                             <div className="space-y-4">
+                                <div className="mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleBackToStep1}
+                                        className="text-cyan-400 hover:text-cyan-300 flex items-center gap-2"
+                                    >
+                                        <ArrowLeftIcon className="size-4" />
+                                        Back to email entry
+                                    </button>
+                                </div>
+                                
+                                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4 mb-4">
+                                    <p className="text-sm text-cyan-300">
+                                        Verification code sent to: <span className="font-medium">{pendingNewEmail}</span>
+                                    </p>
+                                </div>
+                                
                                 <div>
                                     <label htmlFor="verificationCode" className="auth-input-label mb-2 block">
                                         Verification Code
@@ -420,7 +444,7 @@ function AccountSecuritySection() {
                                         <p className="text-sm text-red-400 mt-1">{errors.verificationCode}</p>
                                     )}
                                     <p className="text-sm text-slate-400 mt-2">
-                                        Enter the 6-digit code sent to {securityData.newEmail}
+                                        Enter the 6-digit code sent to {pendingNewEmail}
                                     </p>
                                 </div>
 
@@ -457,7 +481,7 @@ function AccountSecuritySection() {
                                 disabled={isSaving}
                                 className="px-6 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                {emailStep === 1 ? "Cancel" : "Back"}
+                                Cancel
                             </button>
                             <button
                                 type="submit"

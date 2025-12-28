@@ -13,6 +13,7 @@ export const useAccountStore = create((set, get) => ({
         currentEmail: "",
         newEmail: "",
         verificationCode: "",
+        recoveryCode: "",
         toggles: {
             twoFactor: false,
             qrLogin: false,

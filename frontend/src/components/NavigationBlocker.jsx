@@ -1,10 +1,29 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate, useBlocker } from "react-router-dom";
 import { useAccountStore } from "../store/useAccountStore";
 
 function NavigationBlocker() {
   const { hasChanges } = useAccountStore();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasChanges && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      const confirmed = window.confirm(
+        "You have unsaved changes. Are you sure you want to leave?"
+      );
+      if (confirmed) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -14,31 +33,12 @@ function NavigationBlocker() {
       }
     };
 
-    const handleClick = (e) => {
-      if (location.pathname.includes("/account") && hasChanges) {
-        const target = e.target.closest('a');
-        if (target && target.getAttribute('href') && !target.getAttribute('href').includes('/account')) {
-          const confirmed = window.confirm(
-            "You have unsaved changes. Are you sure you want to leave?"
-          );
-          if (!confirmed) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          }
-        }
-      }
-      return true;
-    };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("click", handleClick, true);
     
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("click", handleClick, true);
     };
-  }, [hasChanges, location.pathname]);
+  }, [hasChanges]);
 
   return null;
 }

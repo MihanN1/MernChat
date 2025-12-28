@@ -13,6 +13,7 @@ export const useAuthStore = create((set) => ({
     twoFactorEnabled: false,
     qrLoginEnabled: false
     },
+    authUser: null,
     isCheckingAuth: true,
     isSigningUp: false,
     isLoggingIn: false,

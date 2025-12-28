@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { UserIcon, CameraIcon, SaveIcon, XIcon, LoaderIcon } from "lucide-react";
-import { useAccountStore } from "../store/useAccountStore";
+import { useAccountStore } from "../../store/useAccountStore";
 
 function AccountGeneralSection() {
   const { 

@@ -132,7 +132,7 @@ export const useAccountStore = create((set, get) => ({
 
             const authStore = useAuthStore.getState();
             if (type === "general" || type === "email" || type === "security_toggles") {
-                authStore.authUser = res.data;
+                useAuthStore.setState({ authUser: res.data });
             }
 
             if (type === "password") {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LockIcon, ShieldIcon, ArrowRightIcon, LoaderIcon, CheckCircleIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import { LockIcon, ShieldIcon, ArrowRightIcon, LoaderIcon, CheckCircleIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon, MailIcon } from "lucide-react";
 import { useAccountStore } from "../../store/useAccountStore";
 import { useNavigate } from "react-router-dom";
 

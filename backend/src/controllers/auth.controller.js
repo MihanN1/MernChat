@@ -123,9 +123,24 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+const emailVerificationCodes = new Map();  
+  
+const verifyEmailCode = (email, code) => {  
+    const stored = emailVerificationCodes.get(email);  
+    if (!stored) return false;  
+    if (stored.expiresAt < Date.now()) {  
+        emailVerificationCodes.delete(email);  
+        return false;  
+    }  
+    return stored.code === code;  
+};  
 const generateRecoveryCode = () => {
     return crypto.randomBytes(6).toString('hex').toUpperCase();
 };
+emailVerificationCodes.set(newEmail, {  
+    code: verificationCode,  
+    expiresAt: Date.now() + 10 * 60 * 1000
+});  
 const generateVerificationCode = () => {
     return crypto.randomInt(100000, 1000000).toString();
 };

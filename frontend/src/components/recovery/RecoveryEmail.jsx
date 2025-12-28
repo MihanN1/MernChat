@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 function RecoveryEmail() {
     const { recoveryData, recoveryStep, isRecovering, isSendingRecoveryCode, recoveryErrors, 
             updateRecoveryData, sendRecoveryCode, verifyRecoveryCode, 
-            sendNewEmailVerification, updateEmailViaRecovery, setRecoveryStep, resetRecovery } = useAccountStore();
+            sendEmailVerification, updateEmailViaRecovery, setRecoveryStep, resetRecovery } = useAccountStore();
     const navigate = useNavigate();
     const [success, setSuccess] = useState(false);
     const handleEmailSubmit = async (e) => {
@@ -19,7 +19,7 @@ function RecoveryEmail() {
     };
     const handleNewEmailSubmit = async (e) => {
         e.preventDefault();
-        await sendNewEmailVerification(recoveryData.newEmail);
+        await sendEmailVerification(recoveryData.newEmail);
     };
     const handleVerificationSubmit = async (e) => {
         e.preventDefault();

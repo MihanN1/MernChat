@@ -10,7 +10,7 @@ import {
   LoaderIcon,
   RefreshCwIcon
 } from "lucide-react";
-import { useAccountStore } from "../store/useAccountStore";
+import { useAccountStore } from "../../store/useAccountStore";
 
 function AccountSecuritySection() {
   const { 
@@ -152,8 +152,7 @@ function AccountSecuritySection() {
         <h3 className="text-xl font-semibold text-slate-200 mb-2">Security Settings</h3>
         <p className="text-slate-400">Manage your account security and authentication</p>
       </div>
-
-      {/* Tabs */}
+      
       <div className="flex space-x-2 border-b border-slate-700/40">
         <button
           onClick={() => setActiveTab("password")}

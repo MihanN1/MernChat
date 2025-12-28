@@ -85,13 +85,13 @@ export function createPasswordResetTemplate(name, resetURL, expiryMinutes = 60) 
   `;
 };
 export function createEmailResetTemplate(name, resetUrl) {
-  `
+  return `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Reset your password</title>
+    <title>Verify your new email</title>
     <style>
       body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f6f9fc; }
       .container { max-width:600px; margin:28px auto; background:#fff; padding:24px; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
@@ -102,13 +102,13 @@ export function createEmailResetTemplate(name, resetUrl) {
   </head>
   <body>
     <div class="container">
-      <h1>Password reset request</h1>
+      <h1>Email change verification</h1>
       <p>Hello ${name},</p>
       <p>We received a request to reset your password. Click the button below to set a new password. This link will expire in {{expiryMinutes}} minutes.</p>
 
-      <a href="${resetUrl}" class="btn primary">Reset Password</a>
+      <a href="${resetUrl}" class="btn primary">Verify Email</a>
 
-      <p class="muted">If you didn't request a password reset, ignore this email or contact support.</p>
+      <p class="muted">If you didn't request an email change, ignore this email or contact support.</p> 
     </div>
   </body>
   </html>

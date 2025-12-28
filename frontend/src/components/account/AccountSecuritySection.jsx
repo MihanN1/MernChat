@@ -19,7 +19,8 @@ function AccountSecuritySection() {
         updateSecurityField,
         updateSecurityToggle,
         saveChanges,
-        verifyAndUpdateEmail,
+        completeEmailChange,
+        sendVerificationCode,
         resetChanges,
         isSaving,
         hasChanges,
@@ -72,7 +73,7 @@ function AccountSecuritySection() {
             });
             return;
         }
-        const success = await verifyAndUpdateEmail(
+        const success = await completeEmailChange(
             securityData.verificationCode,
             securityData.recoveryCode
         );

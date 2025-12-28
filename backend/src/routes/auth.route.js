@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, login, logout, updateProfile, sendVerificationCode, sendRecoveryCode,
+import { signup, login, logout, updateProfile, sendRecoveryCode,
 verifyRecoveryCode, sendNewEmailVerification, recoverEmail, sendPasswordResetCode, resetPassword, verifyPasswordResetCode } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";

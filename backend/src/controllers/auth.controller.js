@@ -249,18 +249,16 @@ export const sendRecoveryCode = async (req, res) => {
             return res.status(400).json({ message: "Email is required" });
         }
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: "No account found with this email" });
+        if (user) {
+            const recoveryCode = generateRecoveryCode();
+            await user.setRecoveryCode(recoveryCode);
+            // TODO: Actually send email with recovery code and destroy the console.log below
+            if (ENV.NODE_ENV === 'development') {
+                console.log(`[DEV] Recovery code for ${email}: ${recoveryCode}`);
+            }
         }
-        const recoveryCode = generateRecoveryCode();
-        await user.setRecoveryCode(recoveryCode);
-        // TODO: Actually send email with recovery code and destroy the console.log below
-        if (ENV.NODE_ENV === 'development') {
-            console.log(`[DEV] Recovery code for ${email}: ${recoveryCode}`);
-        }
-        
-        res.status(200).json({
-            message: "Recovery code sent to your email",
+        return res.status(200).json({ 
+            message: 'If an account exists with this email, a recovery code has been sent.'
         });
     } catch (error) {
         console.error("Send recovery code error:", error);
@@ -396,20 +394,19 @@ export const sendPasswordResetCode = async (req, res) => {
             return res.status(400).json({ message: "Email is required" });
         }
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: "No account found with this email" });
+        if (user) {
+            const resetCode = generateVerificationCode();
+            const resetCodeHash = await bcrypt.hash(resetCode, 10);
+            const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+            user.passwordResetCode = {
+                codeHash: resetCodeHash,
+                expiresAt: expiresAt
+            };
+            await user.save();
+            // TODO: actually send password reset code
         }
-        const resetCode = generateVerificationCode();
-        const resetCodeHash = await bcrypt.hash(resetCode, 10);
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-        user.passwordResetCode = {
-            codeHash: resetCodeHash,
-            expiresAt: expiresAt
-        };
-        await user.save();
-        // TODO: actually send password reset code
         res.status(200).json({ 
-            message: "Password reset code sent to your email"
+            message: "If the user exists, the password reset code has been sent."
         });
     } catch (error) {
         console.error("Send password reset code error:", error);
@@ -425,38 +422,35 @@ export const verifyPasswordResetCode = async (req, res) => {
             });  
         }
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ 
-                message: "User not found" 
-            });
-        }
-        if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {  
-            return res.status(400).json({ 
-                message: "No reset code found for this email" 
-            });  
-        }
-        if (user.passwordResetCode.expiresAt < new Date()) {
+        if (user) {
+            if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {  
+                return res.status(400).json({ 
+                    message: "If user exists, no reset code found for this email" 
+                });  
+            }
+            if (user.passwordResetCode.expiresAt < new Date()) {
+                user.passwordResetCode = { codeHash: "", expiresAt: null };
+                await user.save();
+                return res.status(400).json({ 
+                    message: "If user exists, reset code has expired" 
+                });
+            }
+            if (user.passwordResetCode.codeHash !== resetCode) {
+                return res.status(400).json({ 
+                    message: "Invalid reset code" 
+                });
+            }
+            if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {
+                return res.status(400).json({ 
+                    message: "No reset code found for this email" 
+                });
+            }
             user.passwordResetCode = { codeHash: "", expiresAt: null };
             await user.save();
-            return res.status(400).json({ 
-                message: "Reset code has expired" 
+            res.status(200).json({ 
+                message: "Reset code is valid."
             });
         }
-        if (user.passwordResetCode.codeHash !== resetCode) {
-            return res.status(400).json({ 
-                message: "Invalid reset code" 
-            });
-        }
-        if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {
-            return res.status(400).json({ 
-                message: "No reset code found for this email" 
-            });
-        }
-        user.passwordResetCode = { codeHash: "", expiresAt: null };
-        await user.save();
-        res.status(200).json({ 
-            message: "Reset code is valid."
-        });
     } catch (error) {
         console.error("Reset password error:", error);
         res.status(500).json({ message: "Failed to validate password reset code" });

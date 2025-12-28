@@ -20,6 +20,7 @@ function AccountSecuritySection() {
     saveChanges,
     resetChanges,
     isSaving,
+    completeEmailChange,
     hasChanges,
     errors,
     setErrors,
@@ -33,7 +34,8 @@ function AccountSecuritySection() {
     confirm: false,
   });
   const [activeTab, setActiveTab] = useState("password");
-
+  const [emailStep, setEmailStep] = useState(1);
+  const [emailSuccess, setEmailSuccess] = useState(false);
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     updateSecurityField(name, value);
@@ -43,14 +45,47 @@ function AccountSecuritySection() {
     }
   };
 
-  const handleEmailChange = (e) => {
-    const { name, value } = e.target;
-    updateSecurityField(name, value);
-    
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
-  };
+  const handleEmailChangeStep1 = async (e) => {
+        e.preventDefault();
+        if (!securityData.newEmail || !/\S+@\S+\.\S+/.test(securityData.newEmail)) {
+            setErrors({ ...errors, newEmail: "Please enter a valid email" });
+            return;
+        }
+        await saveChanges("email");
+        setEmailStep(2);
+    };
+
+    const handleEmailChangeStep2 = async (e) => {
+        e.preventDefault();
+        
+        if (!securityData.verificationCode || !securityData.recoveryCode) {
+            setErrors({ 
+                ...errors, 
+                verificationCode: "Both verification code and recovery code are required" 
+            });
+            return;
+        }
+        const success = await completeEmailChange(
+            securityData.verificationCode,
+            securityData.recoveryCode
+        );
+        
+        if (success) {
+            setEmailSuccess(true);
+            setTimeout(() => {
+                setEmailStep(1);
+                setEmailSuccess(false);
+                setActiveTab("password");
+            }, 3000);
+        }
+    };
+
+    const handleCancelEmailChange = () => {
+        setEmailStep(1);
+        setEmailSuccess(false);
+        setErrors({});
+        resetChanges();
+    };
 
   const handleToggle = (toggleName) => {
     updateSecurityToggle(toggleName, !securityData.toggles[toggleName]);
@@ -319,131 +354,141 @@ function AccountSecuritySection() {
           </div>
         </form>
       )}
-
       {activeTab === "email" && (
-        <form onSubmit={handleEmailSubmit} className="space-y-6">
-          <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/40">
-            <h4 className="text-lg font-medium text-slate-200 mb-6 flex items-center gap-2">
-              <MailIcon className="w-5 h-5 text-cyan-400" />
-              Change Email Address
-            </h4>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="currentEmail" className="auth-input-label mb-2 block">
-                  Current Email Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    id="currentEmail"
-                    name="currentEmail"
-                    value={securityData.currentEmail || ""}
-                    onChange={handleEmailChange}
-                    className="input"
-                    placeholder="Enter your current email"
-                  />
-                </div>
-                {errors.currentEmail && (
-                  <p className="text-sm text-red-400 mt-1">{errors.currentEmail}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="newEmail" className="auth-input-label mb-2 block">
-                  New Email Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    id="newEmail"
-                    name="newEmail"
-                    value={securityData.newEmail || ""}
-                    onChange={handleEmailChange}
-                    className="input"
-                    placeholder="Enter new email address"
-                  />
-                </div>
-                {errors.newEmail && (
-                  <p className="text-sm text-red-400 mt-1">{errors.newEmail}</p>
-                )}
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="verificationCode" className="auth-input-label">
-                    Verification Code
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleSendVerificationCode}
-                    disabled={isSendingCode || !securityData.newEmail}
-                    className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSendingCode ? (
-                      <>
-                        <LoaderIcon className="size-3 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCwIcon className="size-3" />
-                        Send Code
-                      </>
-                    )}
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="verificationCode"
-                    name="verificationCode"
-                    value={securityData.verificationCode || ""}
-                    onChange={handleEmailChange}
-                    className="input"
-                    placeholder="Enter 6-digit code"
-                    maxLength={6}
-                  />
-                </div>
-                {errors.verificationCode && (
-                  <p className="text-sm text-red-400 mt-1">{errors.verificationCode}</p>
-                )}
-                <p className="text-sm text-slate-400 mt-2">
-                  We'll send a verification code to your new email
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-slate-700/40 flex justify-between">
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={isSaving || !hasChanges}
-                className="px-6 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving || !securityData.verificationCode}
-                className="px-6 py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSaving ? (
-                  <>
-                    <LoaderIcon className="size-5 animate-spin" />
-                    Updating...
-                  </>
+        <form onSubmit={emailStep === 1 ? handleEmailChangeStep1 : handleEmailChangeStep2} className="space-y-6">
+            <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/40">
+                {emailSuccess ? (
+                    <div className="flex flex-col items-center justify-center text-center py-8">
+                        <CheckCircleIcon className="w-16 h-16 text-emerald-500 mb-4" />
+                        <h4 className="text-lg font-medium text-slate-200 mb-2">Email Updated Successfully!</h4>
+                        <p className="text-slate-400">
+                            Your email has been updated. Check your new email for the updated recovery code.
+                        </p>
+                    </div>
                 ) : (
-                  <>
-                    <MailIcon className="size-5" />
-                    Update Email
-                  </>
+                    <>
+                        <h4 className="text-lg font-medium text-slate-200 mb-6 flex items-center gap-2">
+                            <MailIcon className="w-5 h-5 text-cyan-400" />
+                            {emailStep === 1 ? "Change Email Address" : "Verify Email Change"}
+                        </h4>
+                        
+                        {emailStep === 1 ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="newEmail" className="auth-input-label mb-2 block">
+                                        New Email Address
+                                    </label>
+                                    <div className="relative">
+                                        <MailIcon className="auth-input-icon" />
+                                        <input
+                                            type="email"
+                                            id="newEmail"
+                                            name="newEmail"
+                                            value={securityData.newEmail || ""}
+                                            onChange={(e) => updateSecurityField("newEmail", e.target.value)}
+                                            className="input"
+                                            placeholder="Enter new email address"
+                                        />
+                                    </div>
+                                    {errors.newEmail && (
+                                        <p className="text-sm text-red-400 mt-1">{errors.newEmail}</p>
+                                    )}
+                                    <p className="text-sm text-slate-400 mt-2">
+                                        We'll send a verification code to this email
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="verificationCode" className="auth-input-label mb-2 block">
+                                        Verification Code
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            id="verificationCode"
+                                            name="verificationCode"
+                                            value={securityData.verificationCode || ""}
+                                            onChange={(e) => updateSecurityField("verificationCode", e.target.value)}
+                                            className="input text-center text-lg tracking-widest"
+                                            placeholder="Enter 6-digit code"
+                                            maxLength={6}
+                                        />
+                                    </div>
+                                    {errors.verificationCode && (
+                                        <p className="text-sm text-red-400 mt-1">{errors.verificationCode}</p>
+                                    )}
+                                    <p className="text-sm text-slate-400 mt-2">
+                                        Enter the 6-digit code sent to {securityData.newEmail}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="recoveryCode" className="auth-input-label mb-2 block">
+                                        Recovery Code
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            id="recoveryCode"
+                                            name="recoveryCode"
+                                            value={securityData.recoveryCode || ""}
+                                            onChange={(e) => updateSecurityField("recoveryCode", e.target.value.toUpperCase())}
+                                            className="input font-mono text-center text-lg tracking-widest"
+                                            placeholder="Enter 12-character recovery code"
+                                            maxLength={12}
+                                        />
+                                    </div>
+                                    {errors.recoveryCode && (
+                                        <p className="text-sm text-red-400 mt-1">{errors.recoveryCode}</p>
+                                    )}
+                                    <p className="text-sm text-slate-400 mt-2">
+                                        Enter your recovery code (shown during registration)
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="mt-6 pt-6 border-t border-slate-700/40 flex justify-between">
+                            <button
+                                type="button"
+                                onClick={handleCancelEmailChange}
+                                disabled={isSaving}
+                                className="px-6 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {emailStep === 1 ? "Cancel" : "Back"}
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSaving || 
+                                    (emailStep === 1 && !securityData.newEmail) ||
+                                    (emailStep === 2 && (!securityData.verificationCode || !securityData.recoveryCode))}
+                                className="px-6 py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <LoaderIcon className="size-5 animate-spin" />
+                                        Processing...
+                                    </>
+                                ) : emailStep === 1 ? (
+                                    <>
+                                        <MailIcon className="size-5" />
+                                        Send Verification Code
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircleIcon className="size-5" />
+                                        Update Email
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </>
                 )}
-              </button>
             </div>
-          </div>
         </form>
-      )}
+    )}
       {activeTab === "authentication" && (
         <form onSubmit={handleTogglesSubmit} className="space-y-6">
           <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/40">

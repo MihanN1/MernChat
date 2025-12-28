@@ -314,6 +314,12 @@ export const sendNewEmailVerification = async (req, res) => {
                 message: "Both current and new email are required"
             });
         }
+        const user = await User.findOne({ email });  
+        if (!user) {  
+            return res.status(404).json({  
+                message: "No account found with this email"  
+            });  
+        }
         const existingUser = await User.findOne({ email: newEmail });
         if (existingUser) {
             return res.status(400).json({
@@ -354,7 +360,7 @@ export const recoverEmail = async (req, res) => {
                 message: "Invalid recovery code" 
             });
         }
-        // Not sure about the logic, but the idea is that after inputted recovery code is valid, we send verification code, and if it is valid too, we change email.
+        // TODO: Not sure about the logic, but the idea is that after inputted recovery code is valid, we send verification code, and if it is valid too, we change email.
         const isVerificationCodeValid = await user.verifyEmailVerificationCode(verificationCode);
         if (!isVerificationCodeValid) {
             return res.status(400).json({ 
@@ -378,6 +384,11 @@ export const recoverEmail = async (req, res) => {
         user.recoveryCodeHash = await bcrypt.hash(newRecoveryCode, 10);
         await user.clearEmailVerificationCode();
         await user.save();
+        // TODO: Send the new recovery code to the user's new email  
+        // await sendRecoveryCodeEmail(newEmail, user.fullName, newRecoveryCode);  
+        if (ENV.NODE_ENV === 'development') {  
+            console.log(`[DEV] New recovery code for ${newEmail}: ${newRecoveryCode}`);  
+        }
         res.status(200).json({ 
             message: "Email updated successfully. Check your new email for the updated recovery code."
         });
@@ -430,17 +441,17 @@ export const verifyPasswordResetCode = async (req, res) => {
                 message: "Reset code has expired" 
             });
         }
-        if (user.passwordResetCode.code !== resetCode) {
+        if (user.passwordResetCode.codeHash !== resetCode) {
             return res.status(400).json({ 
                 message: "Invalid reset code" 
             });
         }
-        if (!user.passwordResetCode || !user.passwordResetCode.code) {
+        if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {
             return res.status(400).json({ 
                 message: "No reset code found for this email" 
             });
         }
-        user.passwordResetCode = { code: "", expiresAt: null };
+        user.passwordResetCode = { codeHash: "", expiresAt: null };
         await user.save();
         res.status(200).json({ 
             message: "Reset code is valid."

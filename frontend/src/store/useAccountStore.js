@@ -109,7 +109,42 @@ export const useAccountStore = create((set, get) => ({
             set({ isSendingCode: false });
         }
     },
-    
+    completeEmailChange: async (verificationCode, recoveryCode) => {
+        set({ isSaving: true, errors: {} });
+        try {
+            const { userData } = get();
+            const res = await axiosInstance.post("/auth/recover-email", {
+                email: userData.email,
+                verificationCode: verificationCode,
+                recoveryCode: recoveryCode
+            });
+            const authStore = useAuthStore.getState();
+            authStore.authUser = {
+                ...authStore.authUser,
+                email: securityData.newEmail
+            };  
+            set(state => ({
+                hasChanges: false,
+                securityData: {
+                    ...state.securityData,
+                    currentEmail: "",
+                    newEmail: "",
+                    verificationCode: "",
+                    recoveryCode: ""
+                }
+            }));
+            
+            toast.success("Email updated successfully! Check your new email for the updated recovery code.");
+            return true;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "Failed to update email";
+            set({ errors: { general: errorMessage } });
+            toast.error(errorMessage);
+            return false;
+        } finally {
+            set({ isSaving: false });
+        }
+    },
     saveChanges: async (type) => {
         set({ isSaving: true, errors: {} });
         
@@ -138,14 +173,15 @@ export const useAccountStore = create((set, get) => ({
                     
                 case "email":
                     endpoint = "/auth/send-new-email-verification";
+                    method = "POST";
                     data = {
-                        newEmail: securityData.newEmail,
-                        verificationCode: securityData.verificationCode
+                        email: securityData.email,
+                        newEmail: securityData.newEmail
                     };
                     break;
                     
                 case "security_toggles":
-                    endpoint = "/auth/security-settings";
+                    endpoint = "/auth/update-profile";
                     data = {
                         twoFactor: securityData.toggles.twoFactor,
                         qrLogin: securityData.toggles.qrLogin

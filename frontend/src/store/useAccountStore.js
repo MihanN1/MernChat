@@ -117,48 +117,11 @@ export const useAccountStore = create((set, get) => ({
         }
     },
     completeEmailChange: async (verificationCode, recoveryCode) => {
-        set({ isSaving: true, errors: {} });
-        try {
-            const { userData } = get();
-            if (!userData || !userData.email) {  
-                throw new Error("User data not initialized");  
-            }  
-            const res = await axiosInstance.post("/auth/recover-email", {
-                email: userData.email,
-                verificationCode: verificationCode,
-                recoveryCode: recoveryCode
-            });
-            const { securityData } = get();  
-            useAuthStore.setState((state) => ({  
-                authUser: { ...state.authUser, email: securityData.newEmail }  
-            }));
-            set(state => ({
-                hasChanges: false,
-                userData: state.userData  
-                    ? { ...state.userData, email: securityData.newEmail }  
-                    : state.userData,  
-                originalData: state.originalData  
-                    ? { ...state.originalData, email: securityData.newEmail }  
-                    : state.originalData,
-                securityData: {
-                    ...state.securityData,
-                    currentEmail: "",
-                    newEmail: "",
-                    verificationCode: "",
-                    recoveryCode: ""
-                }
-            }));
-            
-            toast.success("Email updated successfully! Check your new email for the updated recovery code.");
-            return true;
-        } catch (error) {
-            const errorMessage = error.response?.data?.message || "Failed to update email";
-            set({ errors: { general: errorMessage } });
-            toast.error(errorMessage);
-            return false;
-        } finally {
-            set({ isSaving: false });
-        }
+        return api.post("/recover-email", {
+            email: authUser.email,
+            verificationCode,
+            recoveryCode
+        });
     },
     saveChanges: async (type) => {
         set({ isSaving: true, errors: {} });

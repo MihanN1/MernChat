@@ -318,51 +318,41 @@ export const recoverEmail = async (req, res) => {
     try {
         const { email, verificationCode, recoveryCode } = req.body;
         if (!email || !verificationCode || !recoveryCode) {
-            return res.status(400).json({ 
-                message: "All fields are required" 
-            });
+            return res.status(400).json({ message: "All fields are required" });
         }
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ 
-                message: "Invalid recovery code or verification code" 
-            });
+            return res.status(400).json({ message: "Invalid codes" });
         }
         const isRecoveryCodeValid = await user.verifyRecoveryCode(recoveryCode);
         if (!isRecoveryCodeValid) {
-            return res.status(400).json({ 
-                message: "Invalid recovery code" 
-            });
+            return res.status(400).json({ message: "Invalid recovery code" });
         }
-        const isVerificationCodeValid = await user.verifyEmailVerificationCode(verificationCode);
+        const isVerificationCodeValid =
+            await user.verifyEmailVerificationCode(verificationCode);
         if (!isVerificationCodeValid) {
-            return res.status(400).json({ 
-                message: "Invalid or expired verification code" 
-            });
+            return res.status(400).json({ message: "Invalid or expired verification code" });
         }
-        const newEmail = pending.newEmail;
+        const newEmail = user.emailVerificationCode.newEmail;
         if (!newEmail) {
-            return res.status(400).json({ 
-                message: "No new email associated with this verification code" 
+            return res.status(400).json({
+                message: "No new email associated with this verification code"
             });
         }
         const existingUser = await User.findOne({ email: newEmail });
         if (existingUser) {
-            return res.status(400).json({ 
-                message: "Email is already in use" 
-            });
+            return res.status(400).json({ message: "Email is already in use" });
         }
         user.email = newEmail;
         const newRecoveryCode = generateRecoveryCode();
         user.recoveryCodeHash = await bcrypt.hash(newRecoveryCode, 10);
         await user.clearEmailVerificationCode();
         await user.save();
-
-        if (ENV.NODE_ENV === 'development') {  
-            console.log(`[DEV] New recovery code for ${newEmail}: ${newRecoveryCode}`);  
+        if (ENV.NODE_ENV === "development") {
+            console.log(`[DEV] New recovery code for ${newEmail}: ${newRecoveryCode}`);
         }
-        res.status(200).json({ 
-            message: "Email updated successfully. Check your new email for the updated recovery code."
+        res.status(200).json({
+            message: "Email updated successfully"
         });
     } catch (error) {
         console.error("Recover email error:", error);

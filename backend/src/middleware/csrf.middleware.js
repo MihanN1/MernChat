@@ -13,7 +13,7 @@ class CSRFMiddleware {
    * @returns {Object}
    */
   generateToken() {
-    const token = randomBytes(32).toString('hex');
+    const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + this.tokenLifetime);
     
     this.tokenMap.set(token, {

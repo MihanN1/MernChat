@@ -305,8 +305,8 @@ export const sendNewEmailVerification = async (req, res) => {
         }
         const user = await User.findOne({ email });  
         if (!user) {  
-            return res.status(404).json({  
-                message: "No account found with this email"  
+            return res.status(200).json({  
+                message: "If account exists, verification code sent to new email."  
             });  
         }
         const existingUser = await User.findOne({ email: newEmail });
@@ -471,7 +471,7 @@ export const resetPassword = async (req, res) => {
         }
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
-        user.passwordResetCode = { code: "", expiresAt: null };
+        user.passwordResetCode = { codeHash: "", expiresAt: null };
         await user.save();
         res.status(200).json({ 
             message: "Password reset successfully. You can now login with your new password."

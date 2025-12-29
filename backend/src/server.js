@@ -17,20 +17,20 @@ app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
-app.use(csrfMiddleware.generateTokenMiddleware());
+app.use(CSRFMiddleware.generateTokenMiddleware());
 app.get('/api/csrf-token', CSRFMiddleware.getTokenHandler());
 
 const vulnerableEndpoints = [
-  '/recover-email',
-  '/send-password-reset-code', 
-  '/send-recovery-code',
-  '/verify-recovery-code',
-  '/reset-password',
-  '/verify-password-reset-code'
+  '/api/auth/recover-email',  
+  '/api/auth/send-password-reset-code', 
+  '/api/auth/send-recovery-code',  
+  '/api/auth/verify-recovery-code',  
+  '/api/auth/reset-password',  
+  '/api/auth/verify-password-reset-code'
 ];
 
 vulnerableEndpoints.forEach(endpoint => {
-  app.post(endpoint, csrfMiddleware.validateTokenMiddleware());
+  app.post(endpoint, CSRFMiddleware.validateTokenMiddleware());
 });
 
 if (ENV.NODE_ENV === "production") {

@@ -1,5 +1,5 @@
 # MernChat Repository Documentation
-The project will have a name when it is FULLY up and running
+The project will have a name when it is FULLY up and running. Will have to change github, a lot of things in the code itself, coderabbit company name, email domain.
 
 This file contains three documents:
 
@@ -87,12 +87,11 @@ Versions planned from **1.0.x** to **2.5.x**:
 
 ### **1.1.x — Chats Update**
 
-* Message formatting
 * Notification frontend changes
 * Editable & removable messages
 * Group chats basics
 * Chat deletion
-* Reply in DMs
+* Replying
 
 ### **1.2.x — Profile Update**
 
@@ -100,7 +99,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Animated avatar
 * Banner
 * Name in groups
-* Tag editing
+* Tagging
 
 ### **1.3.x — Calls Update**
 
@@ -128,7 +127,6 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Message search by filters
 * Message search by phrase
 * Reactions
-* Answering
 * Cookie management system overhaul
 
 ### **1.6.x — Referral System**
@@ -153,7 +151,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 ### **1.9.x — Text Formatting**
 
 * Markdown-like formatting
-* Rich text support
+* Discord/GitHub text formatting, message formating(spoilers, etc)
+* Fonts and rich text support
 
 ### **2.0.x — Heavy Optimization**
 
@@ -164,6 +163,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ### **2.1.x — Security Update**
 
 * Permission system overhaul
+* Security updates(might be implemented during development, rather than doing it further in the project)
 * Privacy settings
 * Suspicious login detection
 
@@ -198,14 +198,13 @@ Versions planned from **1.0.x** to **2.5.x**:
 ## 🔧 Future Update Plans (Extra)
 
 * Last‑seen indicators
-* Turning sounds off and on
+* Turning sounds off and on(muting)
 * Making tag notifications toggable
 * Status updates
-* Privacy settings
-* Tags: `@everyone`, `@here`
+* Tags: `@everyone`, `@here`(might be implemented in 1.2.x)
 * Better UI text, rewritten labels
 * Page transitions without reloads (YouTube-style) or custom animation
-* Audio screen-demo prototypes
+* Video screen-demo prototypes
 * “Delete for me / delete for all” message removal
 * Sounds overhaul
 * Up-to-date modules & dependency upgrades
@@ -224,7 +223,6 @@ Versions planned from **1.0.x** to **2.5.x**:
 
 * Create issues with clear descriptions
 * Submit pull requests for:
-
   * UI fixes
   * Code refactoring
   * Optimization

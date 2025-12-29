@@ -20,7 +20,6 @@ function AccountSecuritySection() {
         updateSecurityToggle,
         saveChanges,
         completeEmailChange,
-        sendVerificationCode,
         resetChanges,
         isSaving,
         hasChanges,
@@ -142,54 +141,12 @@ function AccountSecuritySection() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const validateEmailForm = () => {
-    const newErrors = {};
-    
-    if (!securityData.currentEmail) {
-      newErrors.currentEmail = "Current email is required";
-    } else if (!/\S+@\S+\.\S+/.test(securityData.currentEmail)) {
-      newErrors.currentEmail = "Invalid email format";
-    }
-    
-    if (!securityData.newEmail) {
-      newErrors.newEmail = "New email is required";
-    } else if (!/\S+@\S+\.\S+/.test(securityData.newEmail)) {
-      newErrors.newEmail = "Invalid email format";
-    } else if (securityData.currentEmail === securityData.newEmail) {
-      newErrors.newEmail = "New email must be different";
-    }
-    
-    if (!securityData.verificationCode) {
-      newErrors.verificationCode = "Verification code is required";
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSendVerificationCode = async () => {
-    if (!securityData.newEmail || !/\S+@\S+\.\S+/.test(securityData.newEmail)) {
-      setErrors({ ...errors, newEmail: "Please enter a valid email" });
-      return;
-    }
-
-    await sendVerificationCode(securityData.newEmail);
-  };
-
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     
     if (!validatePasswordForm()) return;
     
     await saveChanges("password");
-  };
-
-  const handleEmailSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateEmailForm()) return;
-    
-    await saveChanges("email");
   };
 
   const handleTogglesSubmit = async (e) => {

@@ -114,6 +114,9 @@ export const useAccountStore = create((set, get) => ({
         set({ isSaving: true, errors: {} });
         try {
             const { userData } = get();
+            if (!userData || !userData.email) {  
+                throw new Error("User data not initialized");  
+            }  
             const res = await axiosInstance.post("/auth/recover-email", {
                 email: userData.email,
                 verificationCode: verificationCode,
@@ -174,7 +177,7 @@ export const useAccountStore = create((set, get) => ({
                 case "email":
                     endpoint = "/auth/send-new-email-verification";
                     data = {
-                        email: securityData.currentEmail,
+                        email: userData.email,
                         newEmail: securityData.newEmail
                     };
                     break;

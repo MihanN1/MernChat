@@ -372,7 +372,7 @@ export const recoverEmail = async (req, res) => {
         user.recoveryCodeHash = await bcrypt.hash(newRecoveryCode, 10);
         await user.clearEmailVerificationCode();
         await user.save();
-        
+
         if (ENV.NODE_ENV === 'development') {  
             console.log(`[DEV] New recovery code for ${newEmail}: ${newRecoveryCode}`);  
         }
@@ -455,26 +455,45 @@ export const verifyPasswordResetCode = async (req, res) => {
 export const resetPassword = async (req, res) => {
     try {
         const { email, resetCode, newPassword } = req.body;
-        if (!email || !newPassword || !resetCode) {
-            return res.status(400).json({ message: 'All fields are required' });
+        const user = await User.findOne({ email });  
+        if (!user) {  
+            return res.status(400).json({ 
+                message: "Invalid reset code"  
+            });  
         }
-        if (!validator.isEmail(email)) {
-            return res.status(400).json({ message: 'Invalid email format' });
-        }
-        const user = await User.findOne({ email: email.toLowerCase() });
-        if (!user) {
-            return res.status(400).json({ message: 'Invalid reset code or email' });
-        }
-        const isValid = await verifyPasswordResetCode(email, resetCode);
-        if (!isValid) {
-            return res.status(400).json({ message: 'Invalid or expired reset code' });
-        }
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.newPassword = hashedPassword;
-        await user.save();
-        return res.status(200).json({ message: 'Password reset successfully' });
+        if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {  
+            return res.status(400).json({ 
+                message: "Invalid reset code" 
+            });  
+        }  
+        if (user.passwordResetCode.expiresAt < new Date()) {  
+            user.passwordResetCode = { codeHash: "", expiresAt: null };  
+            await user.save();  
+            return res.status(400).json({ 
+                message: "Reset code has expired" 
+            });  
+        }  
+        const isCodeValid = await bcrypt.compare(resetCode, user.passwordResetCode.codeHash);  
+        if (!isCodeValid) {  
+            return res.status(400).json({ 
+                message: "Invalid reset code" 
+            });  
+        }  
+        
+        const salt = await bcrypt.genSalt(10);  
+        user.password = await bcrypt.hash(newPassword, salt);  
+        user.passwordResetCode = { codeHash: "", expiresAt: null };  
+        await user.save();  
+        res.status(200).json({ 
+            message: "Password reset successfully. You can now login with your new password."  
+        });
     } catch (error) {
         console.error('Reset password error:', error);
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
+// Not sure in the Password recovery and email recovery logic. So here is the intended one:
+//When you recover your password, you enter the email of yours and the new password, then, after the checks, you get sent the password reset code, which, if when entered is right, will change the password to the new one.
+//When you recover your email, you enter your old email, then new email, then the recovery code. If everything is alright, you get sent the email verification code TO YOUR NEW EMAIL, and if when entered is right the email is changed to the new one.
+//The problem is the connection between frontend and backend(for example handleVerificationSubmit function sends four variables and recoverEmail requires three), and sendRecoveryCode, sendNewEmailVerification and sendPasswordResetCode that do exist but are never used. 
+//Also there is no email verification code verification, so it might break the program too.

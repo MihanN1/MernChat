@@ -105,10 +105,10 @@ export const useAccountStore = create((set, get) => ({
     
     setErrors: (errors) => set({ errors }),
     
-    sendVerificationCode: async (email) => {
+    sendVerificationCode: async (email, newEmail) => {
         set({ isSendingCode: true });
         try {
-            const res = await axiosInstance.post("/auth/send-new-email-verification", { email });
+            const res = await axiosInstance.post("/auth/send-new-email-verification", { email, newEmail });
             toast.success(res.data.message);
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to send code");
@@ -117,11 +117,11 @@ export const useAccountStore = create((set, get) => ({
         }
     },
     completeEmailChange: async (verificationCode, recoveryCode) => {
-        const { securityData } = get();
-        return api.post("/recover-email", {
-            email: authUser.email,
-            newEmail: securityData.newEmail,
-            verificationCode,
+        const { userData } = get();
+        return axiosInstance.post("/auth/recover-email", {  
+            email: userData.email,  
+            newEmail: get().securityData.newEmail,  
+            verificationCode: verificationCode,
             recoveryCode
         });
     },

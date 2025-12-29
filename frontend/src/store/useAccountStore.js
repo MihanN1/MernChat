@@ -117,8 +117,10 @@ export const useAccountStore = create((set, get) => ({
         }
     },
     completeEmailChange: async (verificationCode, recoveryCode) => {
+        const { securityData } = get();
         return api.post("/recover-email", {
             email: authUser.email,
+            newEmail: securityData.newEmail,
             verificationCode,
             recoveryCode
         });

@@ -18,11 +18,11 @@ export const updateProfile = async (req, res) => {
             verificationCode, 
             securitySettings 
         } = req.body;
+        const userId = req.user._id;
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const userId = req.user._id;
         let updateData = {};
         if (nickname !== undefined) {
             if (nickname.length < 3 || nickname.length > 20) {
@@ -66,20 +66,29 @@ export const updateProfile = async (req, res) => {
             }
         }
         if (currentPassword && newPassword) {
+            const user = await User.findById(userId);  
+            if (!user) {  
+                return res.status(404).json({ message: 'User not found' });  
+            }
             const isMatch = await bcrypt.compare(currentPassword, user.password);
             if (!isMatch) {
                 return res.status(400).json({ message: 'Current password is incorrect' });
             }
-            user.password = newPassword;
+            const salt = await bcrypt.genSalt(10);  
+            updateData.password = await bcrypt.hash(newPassword, salt);
         }
         if (newEmail && verificationCode) {
-            const isValid = user.verifyEmailVerificationCode(verificationCode);
+            const user = await User.findById(userId);  
+            if (!user) {  
+                return res.status(404).json({ message: 'User not found' });  
+            }  
+            const isValid = await user.verifyEmailVerificationCode(verificationCode)
             if (!isValid) {
                 return res.status(400).json({ message: 'Invalid or expired verification code' });
             }
-            user.email = newEmail;
-            user.emailVerified = false;
-            user.clearEmailVerificationCode();
+            updateData.email = newEmail;  
+            updateData.emailVerified = true;  
+            await user.clearEmailVerificationCode()
         }
         if (securitySettings) {
             if (typeof securitySettings.twoFactor === 'boolean') {
@@ -316,13 +325,17 @@ export const sendNewEmailVerification = async (req, res) => {
 };
 export const recoverEmail = async (req, res) => {
     try {
-        const { email, verificationCode, recoveryCode } = req.body;
-        if (!email || !verificationCode || !recoveryCode) {
+        const { email, newEmail, verificationCode, recoveryCode } = req.body;
+        if (!email || !verificationCode || !recoveryCode || !newEmail) {
             return res.status(400).json({ message: "All fields are required" });
         }
         const user = await User.findOne({ email });
+        const userExists = await User.findOne({ newEmail });
         if (!user) {
             return res.status(400).json({ message: "Invalid codes" });
+        }
+        if (userExists) {
+            return res.status(400).json({ message: "Invalid email" });
         }
         const isRecoveryCodeValid = await user.verifyRecoveryCode(recoveryCode);
         if (!isRecoveryCodeValid) {
@@ -332,12 +345,6 @@ export const recoverEmail = async (req, res) => {
             await user.verifyEmailVerificationCode(verificationCode);
         if (!isVerificationCodeValid) {
             return res.status(400).json({ message: "Invalid or expired verification code" });
-        }
-        const newEmail = user.emailVerificationCode.newEmail;
-        if (!newEmail) {
-            return res.status(400).json({
-                message: "No new email associated with this verification code"
-            });
         }
         const existingUser = await User.findOne({ email: newEmail });
         if (existingUser) {

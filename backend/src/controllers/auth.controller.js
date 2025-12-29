@@ -276,8 +276,8 @@ export const verifyRecoveryCode = async (req, res) => {
         }
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ 
-                message: "No account found with this email" 
+            return res.status(400).json({ 
+                message: "Invalid recovery code"
             });
         }
         const isValid = await user.verifyRecoveryCode(recoveryCode.toUpperCase());  
@@ -339,11 +339,11 @@ export const recoverEmail = async (req, res) => {
         }
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ 
-                message: "User not found" 
+            return res.status(400).json({ 
+                message: "Invalid recovery code or verification code" 
             });
         }
-        const isRecoveryCodeValid = await bcrypt.compare(recoveryCode, user.recoveryCodeHash);
+        const isRecoveryCodeValid = await user.verifyRecoveryCode(recoveryCode);
         if (!isRecoveryCodeValid) {
             return res.status(400).json({ 
                 message: "Invalid recovery code" 
@@ -424,27 +424,27 @@ export const verifyPasswordResetCode = async (req, res) => {
         const user = await User.findOne({ email });
         if (user) {
             if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {  
+                    return res.status(400).json({ 
+                        message: "Invalid reset code" 
+                    });  
+                }  
+            if (user.passwordResetCode.expiresAt < new Date()) {  
+                user.passwordResetCode = { codeHash: "", expiresAt: null };  
+                await user.save();  
                 return res.status(400).json({ 
-                    message: "If user exists, no reset code found for this email" 
+                    message: "Reset code has expired" 
                 });  
-            }
-            if (user.passwordResetCode.expiresAt < new Date()) {
-                user.passwordResetCode = { codeHash: "", expiresAt: null };
-                await user.save();
-                return res.status(400).json({ 
-                    message: "If user exists, reset code has expired" 
-                });
-            }
+            }  
             const isCodeValid = await bcrypt.compare(resetCode, user.passwordResetCode.codeHash);  
-            if (!isCodeValid) {
+            if (!isCodeValid) {  
                 return res.status(400).json({ 
                     message: "Invalid reset code" 
-                });
-            }
-            res.status(200).json({ 
-                message: "Reset code is valid."
-            });
+                });  
+            } 
         }
+        res.status(200).json({ 
+            message: "Reset code is valid."
+        });
     } catch (error) {
         console.error("Reset password error:", error);
         res.status(500).json({ message: "Failed to validate password reset code" });
@@ -452,8 +452,8 @@ export const verifyPasswordResetCode = async (req, res) => {
 };
 export const resetPassword = async (req, res) => {
     try {
-        const { email, newPassword } = req.body;
-        if (!email || !newPassword) {
+        const { email, newPassword, resetCode } = req.body;  
+        if (!email || !newPassword || !resetCode) {
             return res.status(400).json({ 
                 message: "All fields are required" 
             });
@@ -465,17 +465,20 @@ export const resetPassword = async (req, res) => {
         }
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ 
-                message: "User not found" 
+            return res.status(400).json({ 
+                message: "Invalid reset code"
             });
         }
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
-        user.passwordResetCode = { codeHash: "", expiresAt: null };
-        await user.save();
-        res.status(200).json({ 
-            message: "Password reset successfully. You can now login with your new password."
-        });
+        const verifiedCode = verifyPasswordResetCode(email, resetCode);
+        if (verifiedCode) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(newPassword, salt);
+            user.passwordResetCode = { codeHash: "", expiresAt: null };
+            await user.save();
+            res.status(200).json({ 
+                message: "Password reset successfully. You can now login with your new password."
+            });
+        }
     } catch (error) {
         console.error("Reset password error:", error);
         res.status(500).json({ message: "Failed to reset password" });

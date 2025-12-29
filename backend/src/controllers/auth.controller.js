@@ -349,7 +349,6 @@ export const recoverEmail = async (req, res) => {
                 message: "Invalid recovery code" 
             });
         }
-        // TODO: Not sure about the logic, but the idea is that after inputted recovery code is valid, we send verification code, and if it is valid too, we change email.
         const isVerificationCodeValid = await user.verifyEmailVerificationCode(verificationCode);
         if (!isVerificationCodeValid) {
             return res.status(400).json({ 
@@ -373,8 +372,7 @@ export const recoverEmail = async (req, res) => {
         user.recoveryCodeHash = await bcrypt.hash(newRecoveryCode, 10);
         await user.clearEmailVerificationCode();
         await user.save();
-        // TODO: Send the new recovery code to the user's new email  
-        // await sendRecoveryCodeEmail(newEmail, user.fullName, newRecoveryCode);  
+        
         if (ENV.NODE_ENV === 'development') {  
             console.log(`[DEV] New recovery code for ${newEmail}: ${newRecoveryCode}`);  
         }
@@ -389,28 +387,32 @@ export const recoverEmail = async (req, res) => {
 
 export const sendPasswordResetCode = async (req, res) => {
     try {
-        const { email } = req.body; 
-        if (!email) {
-            return res.status(400).json({ message: "Email is required" });
+        const { email } = req.body;
+        if (!email || !validator.isEmail(email)) {
+            return res.status(400).json({ message: 'Please provide a valid email address' });
         }
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
         if (user) {
-            const resetCode = generateVerificationCode();
-            const resetCodeHash = await bcrypt.hash(resetCode, 10);
-            const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-            user.passwordResetCode = {
-                codeHash: resetCodeHash,
-                expiresAt: expiresAt
-            };
-            await user.save();
-            // TODO: actually send password reset code
+            const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const hashedCode = await bcrypt.hash(resetCode, 10);
+            await ResetCode.findOneAndUpdate(
+                { email: email.toLowerCase() },
+                { 
+                    code: hashedCode, 
+                    expiresAt: new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+                },
+                { upsert: true, new: true }
+            );
+            if (ENV.NODE_ENV === 'development') {
+                console.log(`Password reset code for ${email}: ${resetCode}`); //TODO: send password reset code plz
+            }
         }
-        res.status(200).json({ 
-            message: "If the user exists, the password reset code has been sent."
+        return res.status(200).json({
+            message: 'If an account exists with this email, a password reset code has been sent.'
         });
     } catch (error) {
-        console.error("Send password reset code error:", error);
-        res.status(500).json({ message: "Failed to send reset code" });
+        console.error('Send password reset code error:', error);
+        return res.status(500).json({ message: 'An error occurred. Please try again later.' });
     }
 };
 export const verifyPasswordResetCode = async (req, res) => {
@@ -452,35 +454,27 @@ export const verifyPasswordResetCode = async (req, res) => {
 };
 export const resetPassword = async (req, res) => {
     try {
-        const { email, newPassword, resetCode } = req.body;  
+        const { email, resetCode, newPassword } = req.body;
         if (!email || !newPassword || !resetCode) {
-            return res.status(400).json({ 
-                message: "All fields are required" 
-            });
+            return res.status(400).json({ message: 'All fields are required' });
         }
-        if (newPassword.length < 8) {
-            return res.status(400).json({ 
-                message: "Password must be at least 8 characters" 
-            });
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ message: 'Invalid email format' });
         }
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
-            return res.status(400).json({ 
-                message: "Invalid reset code"
-            });
+            return res.status(400).json({ message: 'Invalid reset code or email' });
         }
-        const verifiedCode = verifyPasswordResetCode(email, resetCode);
-        if (verifiedCode) {
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(newPassword, salt);
-            user.passwordResetCode = { codeHash: "", expiresAt: null };
-            await user.save();
-            res.status(200).json({ 
-                message: "Password reset successfully. You can now login with your new password."
-            });
+        const isValid = await verifyPasswordResetCode(email, resetCode);
+        if (!isValid) {
+            return res.status(400).json({ message: 'Invalid or expired reset code' });
         }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.newPassword = hashedPassword;
+        await user.save();
+        return res.status(200).json({ message: 'Password reset successfully' });
     } catch (error) {
-        console.error("Reset password error:", error);
-        res.status(500).json({ message: "Failed to reset password" });
+        console.error('Reset password error:', error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };

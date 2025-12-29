@@ -60,7 +60,17 @@ function AccountSecuritySection() {
                 setEmailStep(2);
             }
         } catch (error) {
-            // TODO: Error handling here
+            console.error("Email change step 1 error:", error);
+            const store = useAccountStore.getState();
+            const errorMessage = error.response?.data?.message || error.message || "Failed to send email change request. Please try again.";
+            if (store.setErrors) {
+                store.setErrors({ ...store.errors, general: errorMessage });
+            } else {
+                useAccountStore.setState({
+                    errors: { ...store.errors, general: errorMessage }
+                });
+            }
+            setErrors({ ...errors, general: errorMessage });
         }  
     };
 

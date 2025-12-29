@@ -18,6 +18,10 @@ export const updateProfile = async (req, res) => {
             verificationCode, 
             securitySettings 
         } = req.body;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
         const userId = req.user._id;
         let updateData = {};
         if (nickname !== undefined) {
@@ -62,39 +66,20 @@ export const updateProfile = async (req, res) => {
             }
         }
         if (currentPassword && newPassword) {
-            const user = await User.findById(userId);
             const isMatch = await bcrypt.compare(currentPassword, user.password);
             if (!isMatch) {
-                return res.status(400).json({ 
-                    message: "Current password is incorrect" 
-                });
+                return res.status(400).json({ message: 'Current password is incorrect' });
             }
-            if (newPassword.length < 8) {
-                return res.status(400).json({ 
-                    message: "New password must be at least 8 characters" 
-                });
-            }
-            updateData.password = await bcrypt.hash(newPassword, 10);
+            user.password = newPassword;
         }
         if (newEmail && verificationCode) {
-            const user = await User.findById(userId);  
-            const isValidCode = await user.verifyEmailVerificationCode(verificationCode);
-            if (!isValidCode) {
-                return res.status(400).json({ 
-                    message: "Invalid or expired verification code" 
-                });
+            const isValid = user.verifyEmailVerificationCode(verificationCode);
+            if (!isValid) {
+                return res.status(400).json({ message: 'Invalid or expired verification code' });
             }
-            const existingEmail = await User.findOne({ 
-                email: newEmail,
-                _id: { $ne: userId } 
-            });
-            if (existingEmail) {
-                return res.status(400).json({ 
-                    message: "Email is already in use" 
-                });
-            }
-            updateData.email = newEmail;
-            await user.clearEmailVerificationCode();
+            user.email = newEmail;
+            user.emailVerified = false;
+            user.clearEmailVerificationCode();
         }
         if (securitySettings) {
             if (typeof securitySettings.twoFactor === 'boolean') {
@@ -355,7 +340,7 @@ export const recoverEmail = async (req, res) => {
                 message: "Invalid or expired verification code" 
             });
         }
-        const newEmail = user.emailVerificationCode.newEmail;
+        const newEmail = pending.newEmail;
         if (!newEmail) {
             return res.status(400).json({ 
                 message: "No new email associated with this verification code" 
@@ -388,21 +373,22 @@ export const recoverEmail = async (req, res) => {
 export const sendPasswordResetCode = async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email || !validator.isEmail(email)) {
+        if (!email) {
             return res.status(400).json({ message: 'Please provide a valid email address' });
         }
-        const user = await User.findOne({ email: email.toLowerCase() });
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;  
+        if (!emailRegex.test(email)) {  
+            return res.status(400).json({ message: 'Invalid email format' });  
+        }  
+        const user = await User.findOne({ email });
         if (user) {
             const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
             const hashedCode = await bcrypt.hash(resetCode, 10);
-            await ResetCode.findOneAndUpdate(
-                { email: email.toLowerCase() },
-                { 
-                    code: hashedCode, 
-                    expiresAt: new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
-                },
-                { upsert: true, new: true }
-            );
+            user.passwordResetCode = {  
+                codeHash: hashedCode,  
+                expiresAt: new Date(Date.now() + 15 * 60 * 1000)  
+            };  
+            await user.save();
             if (ENV.NODE_ENV === 'development') {
                 console.log(`Password reset code for ${email}: ${resetCode}`); //TODO: send password reset code plz
             }

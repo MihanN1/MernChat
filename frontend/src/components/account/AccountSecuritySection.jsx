@@ -52,34 +52,25 @@ function AccountSecuritySection() {
             return;
         }
         setPendingNewEmail(securityData.newEmail);
-        try {  
-            await saveChanges("email");
-            const { errors: currentErrors } = useAccountStore.getState();  
-            if (!currentErrors.general) {
-                setEmailStep(2);
-            }
-        } catch (error) {
-            console.error("Email change step 1 error:", error);
-            const store = useAccountStore.getState();
-            const errorMessage = error.response?.data?.message || error.message || "Failed to send email change request. Please try again.";
-            if (store.setErrors) {
-                store.setErrors({ ...store.errors, general: errorMessage });
-            } else {
-                useAccountStore.setState({
-                    errors: { ...store.errors, general: errorMessage }
-                });
-            }
-            setErrors({ ...errors, general: errorMessage });
+        await saveChanges("email");  
+        const { errors: currentErrors } = useAccountStore.getState();  
+        if (!currentErrors.general) {  
+        setEmailStep(2);  
         }  
-    };
+ };
 
     const handleEmailChangeStep2 = async (e) => {
         e.preventDefault();
         
         if (!securityData.verificationCode || !securityData.recoveryCode) {
-            setErrors({ 
-                ...errors, 
-                verificationCode: "Both verification code and recovery code are required" 
+            setErrors({  
+              ...errors,  
+              verificationCode: !securityData.verificationCode  
+                ? "Verification code is required"  
+                : "",  
+              recoveryCode: !securityData.recoveryCode  
+                ? "Recovery code is required"  
+                : "",  
             });
             return;
         }

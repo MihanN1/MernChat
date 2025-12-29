@@ -42,17 +42,23 @@ export const useAccountStore = create((set, get) => ({
     },
     
     updateField: (field, value) => {
-        set(state => ({
-            userData: { ...state.userData, [field]: value },
-            hasChanges: true
-        }));
+        set(state => {
+            if (!state.userData) return state;
+            return {
+              userData: { ...state.userData, [field]: value },
+              hasChanges: true,
+            };
+        });
     },
     
     updateProfilePicture: (base64String) => {
-        set(state => ({
-            userData: { ...state.userData, profilePic: base64String },
-            hasChanges: true
-        }));
+        set(state => {
+            if (!state.userData) return state;
+            return {
+              userData: { ...state.userData, profilePic: base64String },
+              hasChanges: true,
+            };
+        });
     },
 
     verifyPasswordResetCode: async (email, resetCode) => {
@@ -128,6 +134,12 @@ export const useAccountStore = create((set, get) => ({
             }));
             set(state => ({
                 hasChanges: false,
+                userData: state.userData  
+                    ? { ...state.userData, email: securityData.newEmail }  
+                    : state.userData,  
+                originalData: state.originalData  
+                    ? { ...state.originalData, email: securityData.newEmail }  
+                    : state.originalData,
                 securityData: {
                     ...state.securityData,
                     currentEmail: "",

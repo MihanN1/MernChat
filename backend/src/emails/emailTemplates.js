@@ -53,5 +53,3 @@ export function createWelcomeEmailTemplate(name, recoveryCode, clientURL) {
   </html>
   `;
 };
-//TODO: make an email template for 2FA, NEW recovery code and email or password reset, make 2FA work, and PLEASE make it so if you have an auth cookie you wont need to send the email, but also add a button "remember me" and "log in with QR" to login page
-//TODO: make it so if you log in with QR you dont get the 2FA email, make logging in with QR work.

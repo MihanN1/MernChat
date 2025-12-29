@@ -330,12 +330,8 @@ export const recoverEmail = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
         const user = await User.findOne({ email });
-        const userExists = await User.findOne({ newEmail });
         if (!user) {
             return res.status(400).json({ message: "Invalid codes" });
-        }
-        if (userExists) {
-            return res.status(400).json({ message: "Invalid email" });
         }
         const isRecoveryCodeValid = await user.verifyRecoveryCode(recoveryCode);
         if (!isRecoveryCodeValid) {
@@ -475,8 +471,3 @@ export const resetPassword = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
-// Not sure in the Password recovery and email recovery logic. So here is the intended one:
-//When you recover your password, you enter the email of yours and the new password, then, after the checks, you get sent the password reset code, which, if when entered is right, will change the password to the new one.
-//When you recover your email, you enter your old email, then new email, then the recovery code. If everything is alright, you get sent the email verification code TO YOUR NEW EMAIL, and if when entered is right the email is changed to the new one.
-//The problem is the connection between frontend and backend(for example handleVerificationSubmit function sends four variables and recoverEmail requires three), and sendRecoveryCode, sendNewEmailVerification and sendPasswordResetCode that do exist but are never used. 
-//Also there is no email verification code verification, so it might break the program too.

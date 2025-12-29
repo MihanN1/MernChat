@@ -118,9 +118,10 @@ export const useAccountStore = create((set, get) => ({
     },
     completeEmailChange: async (verificationCode, recoveryCode) => {
         const { userData } = get();
+        const { securityData } = get();
         return axiosInstance.post("/auth/recover-email", {  
             email: userData.email,  
-            newEmail: get().securityData.newEmail,  
+            newEmail: securityData.newEmail,  
             verificationCode: verificationCode,
             recoveryCode
         });

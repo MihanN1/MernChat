@@ -173,7 +173,7 @@ export const useAccountStore = create((set, get) => ({
                     throw new Error("Invalid save type");
             }
             let res;
-            if (endpoint === "/auth/update-profile") {
+            if (endpoint === "/auth/update-profile" || endpoint === "/auth/send-new-email-verification") {
                 res = await axiosInstance.post(endpoint, data);
             } else {  
                 res = await axiosInstance.put(endpoint, data);  
@@ -297,7 +297,6 @@ export const useAccountStore = create((set, get) => ({
         }
     },
     sendEmailVerification: async (email, newEmail) => {
-        email = 
         set({ isSendingRecoveryCode: true, recoveryErrors: {} });
         try {
             await axiosInstance.post("/auth/send-new-email-verification", { email, newEmail });

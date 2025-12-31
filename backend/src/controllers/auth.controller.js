@@ -1,7 +1,7 @@
 import { generateToken } from "../lib/utils.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
-import { sendWelcomeEmail } from "../emails/emailHandlers.js";
+import { sendWelcomeEmail, sendNewRecoveryEmail, sendPasswordResetEmail, sendEmailVerificationEmail } from "../emails/emailHandlers.js";
 import { ENV } from "../lib/env.js";
 import cloudinary from "../lib/cloudinary.js";
 import crypto from "crypto";
@@ -246,9 +246,15 @@ export const sendRecoveryCode = async (req, res) => {
         if (user) {
             const recoveryCode = generateRecoveryCode();
             await user.setRecoveryCode(recoveryCode);
-            // TODO: Actually send email with recovery code and destroy the console.log below
-            if (ENV.NODE_ENV === 'development') {
-                console.log(`[DEV] Recovery code for ${email}: ${recoveryCode}`);
+            try {
+                await sendNewRecoveryEmail(
+                    user.email, 
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    recoveryCode
+                );
+            } catch (error) {
+                console.error("Failed to send email with new recovery code:", error);
             }
         }
         return res.status(200).json({ 
@@ -311,9 +317,15 @@ export const sendNewEmailVerification = async (req, res) => {
         }
         const verificationCode = generateVerificationCode();
         await user.setEmailVerificationCode(verificationCode, newEmail);
-        // TODO: Actually send email with verification code and destroy the console.log below
-        if (ENV.NODE_ENV === 'development') {
-            console.log(`[DEV] Verification code for ${newEmail}: ${verificationCode}`);
+        try {
+                await sendEmailVerificationEmail(
+                    user.email, 
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    verificationCode
+                );
+        } catch (error) {
+                console.error("Failed to send email verification code", error);
         }
         res.status(200).json({
             message: "Verification code sent to new email",
@@ -382,8 +394,15 @@ export const sendPasswordResetCode = async (req, res) => {
                 expiresAt: new Date(Date.now() + 15 * 60 * 1000)  
             };  
             await user.save();
-            if (ENV.NODE_ENV === 'development') {
-                console.log(`Password reset code for ${email}: ${resetCode}`); //TODO: send password reset code plz
+            try {
+                await sendPasswordResetEmail(
+                    user.email, 
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    resetCode
+                );
+            } catch (error) {
+                console.error("Failed to send password reset code", error);
             }
         }
         return res.status(200).json({

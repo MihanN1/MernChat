@@ -28,6 +28,7 @@ export const useAccountStore = create((set, get) => ({
     setActiveSetting: (setting) => set({ activeSetting: setting }),
     
     setUserData: (data) => {
+        if (!data) return;
         set({ 
             userData: data,
             originalData: JSON.parse(JSON.stringify(data)),
@@ -192,6 +193,8 @@ export const useAccountStore = create((set, get) => ({
                         confirmPassword: ""
                     }
                 }));
+            } else if (type === "email") {
+                set({ hasChanges: true });
             } else if (type === "security_toggles") {
                 set({ hasChanges: false });
             } else {

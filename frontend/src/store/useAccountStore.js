@@ -296,10 +296,11 @@ export const useAccountStore = create((set, get) => ({
             set({ isRecovering: false });
         }
     },
-    sendEmailVerification: async (newEmail) => {
+    sendEmailVerification: async (email, newEmail) => {
+        email = 
         set({ isSendingRecoveryCode: true, recoveryErrors: {} });
         try {
-            await axiosInstance.post("/auth/send-verification-code", { email: newEmail, isRecovering: true });
+            await axiosInstance.post("/auth/send-new-email-verification", { email, newEmail });
             toast.success("Verification code sent to new email.");
             set(state => ({ 
                 recoveryStep: { ...state.recoveryStep, email: 4 }

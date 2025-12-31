@@ -20,7 +20,7 @@ function RecoveryEmail() {
     };
     const handleNewEmailSubmit = async (e) => {
         e.preventDefault();
-        await sendEmailVerification(recoveryData.newEmail);
+        await sendEmailVerification(recoveryData.email, recoveryData.newEmail);
     };
     useEffect(() => {  
         return () => {  

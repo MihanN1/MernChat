@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import AccountPage from "./pages/AccountPage";
 import RecoveryPage from "./pages/RecoveryPage";
+import TwoFactorPage from "./pages/TwoFactorPage";
 import { useAuthStore } from './store/useAuthStore';
 import PageLoader from "./components/PageLoader";
 import { Toaster } from "react-hot-toast";
@@ -29,6 +30,7 @@ function App() {
           <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
           <Route path="/account" element={authUser ? <AccountPage /> : <Navigate to="/login" />} />
           <Route path="/recover" element={<RecoveryPage />} />
+          <Route path="/2fa" element={<TwoFactorPage />} />
         </Routes>
         <Toaster />
       </div>

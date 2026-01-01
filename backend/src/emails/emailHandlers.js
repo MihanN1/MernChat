@@ -3,7 +3,8 @@ import {
   createWelcomeEmailTemplate, 
   createNewRecoveryEmailTemplate, 
   createPasswordResetEmailTemplate, 
-  createEmailVerificationTemplate 
+  createEmailVerificationTemplate,
+  createTwoFactorAuthTemplate
 } from "../emails/emailTemplates.js";
 const EMAIL_CONFIGS = {
   WELCOME: {
@@ -29,11 +30,16 @@ const EMAIL_CONFIGS = {
     template: createEmailVerificationTemplate,
     errorMessage: "Failed to send email verification code",
     successMessage: "Email verification code sent successfully"
+  },
+  TWO_FACTOR_AUTH: {
+    subject: "Verify login!",
+    template: createTwoFactorAuthTemplate,
+    errorMessage: "Failed to send two factor authorization code",
+    successMessage: "Two factor authorization code sent successfully"
   }
 };
 const sendEmail = async (emailType, email, name, clientURL, code) => {
   const config = EMAIL_CONFIGS[emailType];
-  
   if (!config) {
     console.error("Invalid email type:", emailType);
     throw new Error("Invalid email type");
@@ -62,4 +68,7 @@ export const sendPasswordResetEmail = async (email, name, clientURL, resetCode) 
 };
 export const sendEmailVerificationEmail = async (email, name, clientURL, verificationCode) => {
   return sendEmail('EMAIL_VERIFICATION', email, name, clientURL, verificationCode);
+};
+export const sendTwoFactorAuthEmail = async (email, name, clientURL, authCode) => {
+  return sendEmail('TWO_FACTOR_AUTH', email, name, clientURL, authCode);
 };

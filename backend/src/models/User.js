@@ -74,6 +74,16 @@ const userSchema = new mongoose.Schema({
             type: String,
             default: ""
         }
+    },
+    twoFactorCode: {
+        codeHash: {
+            type: String,
+            default: ""
+        },
+        expiresAt: {
+            type: Date,
+            default: null
+        }
     }
 }, { timestamps: true });
 

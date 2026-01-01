@@ -17,6 +17,8 @@ export const useAuthStore = create((set, get) => ({
     isCheckingAuth: true,
     isSigningUp: false,
     isLoggingIn: false,
+    isVerifying2FA: false,
+    twoFactorData: null,
     socket: null,
     onlineUsers: [],
     checkAuth: async () => {
@@ -48,19 +50,61 @@ export const useAuthStore = create((set, get) => ({
         set({isLoggingIn:true});
         try {
             const res = await axiosInstance.post("/auth/login", data);
-            set({authUser: res.data});
-            get().connectSocket();
-            toast.success("Logged in successfully");
+            if (res.data.twoFactorRequired) {
+                set({ 
+                    twoFactorData: {
+                        email: res.data.email
+                    }
+                });
+                return { twoFactorRequired: true };
+            } else {
+                set({ authUser: res.data });
+                get().connectSocket();
+                toast.success("Logged in successfully");
+                return { twoFactorRequired: false };
+            }
         } catch (error) {
             toast.error(error?.response?.data?.message || "Login failed");
+            throw error;
         } finally {
             set({isLoggingIn: false});
+        }
+    },
+    resendTwoFactor: async () => {
+        try {
+            const res = await axiosInstance.post("/auth/resend-2fa");
+            toast.success(res.data.message);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Failed to resend code");
+        }
+    },
+    verifyTwoFactor: async (twoFactorCode) => {
+        set({ isVerifying2FA: true });
+        try {
+            const res = await axiosInstance.post("/auth/verify-2fa", {
+                twoFactorCode: twoFactorCode
+            });
+            set({ 
+                authUser: res.data,
+                twoFactorData: null
+            });
+            get().connectSocket();
+            toast.success("Logged in successfully");
+            return true;
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Invalid verification code");
+            return false;
+        } finally {
+            set({ isVerifying2FA: false });
         }
     },
     logout: async () => {
         try {
             await axiosInstance.post("/auth/logout");
-            set({ authUser: null });
+            set({ 
+                authUser: null,
+                twoFactorData: null
+            });
             toast.success("Logged out successfully");
             get().disconnectSocket();
         } catch (error) {
@@ -78,6 +122,9 @@ export const useAuthStore = create((set, get) => ({
             toast.error(error.response.data.message);
         }
     },  
+    clearTwoFactorData: () => {
+        set({ twoFactorData: null });
+    },
     connectSocket: () => {
         const { authUser } = get();
         if (!authUser || get().socket?.connected) return;

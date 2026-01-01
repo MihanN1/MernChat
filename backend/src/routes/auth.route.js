@@ -1,7 +1,8 @@
 import express from "express";
 import { signup, login, logout, updateProfile, sendRecoveryCode,
-verifyRecoveryCode, sendNewEmailVerification, recoverEmail, sendPasswordResetCode, resetPassword, verifyPasswordResetCode } from "../controllers/auth.controller.js";
-import { protectRoute } from "../middleware/auth.middleware.js";
+verifyRecoveryCode, sendNewEmailVerification, recoverEmail, sendPasswordResetCode, 
+resetPassword, verifyPasswordResetCode, verifyTwoFactor, resendTwoFactorCode  } from "../controllers/auth.controller.js";
+import { protectRoute, verifyTempToken } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";
 
 const router = express.Router();
@@ -10,6 +11,8 @@ router.use(arcjetProtection);
 router.post("/signup", signup);
 router.post("/logout", logout);
 router.post("/login", login);
+router.post("/verify-2fa", verifyTempToken, verifyTwoFactor);
+router.post("/resend-2fa", verifyTempToken, resendTwoFactorCode);
 router.put("/update-profile", protectRoute, updateProfile);
 router.post("/send-new-email-verification", sendNewEmailVerification);
 router.post("/recover-email", protectRoute, recoverEmail);

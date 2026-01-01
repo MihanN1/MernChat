@@ -17,3 +17,18 @@ export const protectRoute = async (req,res,next) => {
         res.status(500).json({message: "Internal server error"});
     }
 };
+export const verifyTempToken = async (req, res, next) => {
+    try {
+        const token = req.cookies.jwt_temp || req.body.tempToken;
+        const decoded = jwt.verify(token, ENV.JWT_TEMP_SECRET);
+        const user = await User.findById(decoded.userId).select("-password");
+        if(!token) return res.status(401).json({message:"No temporary token provided"});
+        if(!decoded) return res.status(401).json({message: "Invalid temporary token"});
+        if(!user) return res.status(404).json({message: "User not found"});
+        req.tempUser = user;
+        next();
+    } catch (error) {
+        console.log("Error in verifyTempToken middleware:", error);
+        res.status(401).json({message: "Invalid or expired temporary token"});
+    }
+};

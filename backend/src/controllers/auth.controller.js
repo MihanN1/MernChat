@@ -1,7 +1,7 @@
-import { generateToken } from "../lib/utils.js";
+import { generateToken, generateTempToken } from "../lib/utils.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
-import { sendWelcomeEmail, sendNewRecoveryEmail, sendPasswordResetEmail, sendEmailVerificationEmail } from "../emails/emailHandlers.js";
+import { sendWelcomeEmail, sendNewRecoveryEmail, sendPasswordResetEmail, sendEmailVerificationEmail, sendTwoFactorAuthEmail } from "../emails/emailHandlers.js";
 import { ENV } from "../lib/env.js";
 import cloudinary from "../lib/cloudinary.js";
 import crypto from "crypto";
@@ -122,6 +122,12 @@ const generateRecoveryCode = () => {
 const generateVerificationCode = () => {
     return crypto.randomInt(100000, 1000000).toString();
 };
+const generateResetCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+};
+const generateTwoFactorCode = () => {
+    return crypto.randomInt(100000, 1000000).toString();
+};
 export const login = async (req,res) => {
     const {identifier, password} = req.body
     try {
@@ -134,6 +140,106 @@ export const login = async (req,res) => {
         if(!user) return res.status(400).json({message:"Invalid credentials"});
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
         if(!isPasswordCorrect) return res.status(400).json({message:"Invalid credentials"});
+        if (user.twoFactorEnabled) {
+            const authCode = generateTwoFactorCode();
+            user.twoFactorCode = {
+                codeHash: await bcrypt.hash(authCode, 10),
+                expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+            };
+            await user.save();
+            try {
+                await sendTwoFactorAuthEmail(
+                    user.email,
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    authCode
+                );
+            } catch (error) {
+                console.error("Failed to send 2FA code:", error);
+            }
+            const tempToken = generateTempToken(user._id);
+            res.status(200).json({
+                twoFactorRequired: true,
+                message: "Two-factor authentication code sent to your email",
+                tempToken: tempToken,
+                userId: user._id
+            });
+        } else {
+            generateToken(user._id, res);
+            res.status(200).json({
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                nickname: user.nickname,
+                tag: user.tag,
+                profilePic: user.profilePic,
+                twoFactorEnabled: user.twoFactorEnabled,
+                qrLoginEnabled: user.qrLoginEnabled
+            });
+        }
+    } catch (error) {
+        console.error("Error in login controller:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+export const resendTwoFactorCode = async (req, res) => {
+    try {
+        const user = req.tempUser;
+        const twoFactorCode = generateVerificationCode();
+        user.twoFactorCode = {
+            codeHash: await bcrypt.hash(twoFactorCode, 10),
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+        };
+        await user.save();
+        try {
+            await sendTwoFactorAuthEmail(
+                user.email,
+                user.fullName,
+                ENV.CLIENT_URL,
+                twoFactorCode
+            );
+        } catch (error) {
+            console.error("Failed to resend 2FA code:", error);
+        }
+        res.status(200).json({
+            message: "New verification code sent to your email"
+        });
+    } catch (error) {
+        console.error("Error in resendTwoFactorCode controller:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+export const logout = (req,res) => {
+    res.cookie("jwt","",{maxAge:0});
+    res.status(200).json({message: "Logged out successfully"});
+};
+export const verifyTwoFactor = async (req, res) => {
+    try {
+        const { twoFactorCode } = req.body;
+        const user = req.tempUser;
+        if (!twoFactorCode) {
+            return res.status(400).json({ message: "Verification code is required" });
+        }
+        if (!user.twoFactorCode || !user.twoFactorCode.codeHash) {
+            return res.status(400).json({ message: "2FA code expired or not found" });
+        }
+        if (user.twoFactorCode.expiresAt < new Date()) {
+            user.twoFactorCode = { codeHash: "", expiresAt: null };
+            await user.save();
+            return res.status(400).json({ message: "2FA code has expired" });
+        }
+        const isCodeValid = await bcrypt.compare(twoFactorCode, user.twoFactorCode.codeHash);
+        if (!isCodeValid) {
+            return res.status(400).json({ message: "Invalid verification code" });
+        }
+        user.twoFactorCode = { codeHash: "", expiresAt: null };
+        await user.save();
+        res.cookie("jwt_temp", "", {
+            maxAge: 0,
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "development" ? false : true,
+        });
         generateToken(user._id, res);
         res.status(200).json({
             _id: user._id,
@@ -146,14 +252,11 @@ export const login = async (req,res) => {
             qrLoginEnabled: user.qrLoginEnabled
         });
     } catch (error) {
-        console.error("Error in login controller:", error);
-        res.status(500).json({message: "Internal server error"});
+        console.error("Error in verifyTwoFactor controller:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 };
-export const logout = (req,res) => {
-    res.cookie("jwt","",{maxAge:0});
-    res.status(200).json({message: "Logged out successfully"});
-};
+
 export const signup = async (req, res) => {
     const {fullName, email, password, nickname, tag} = req.body;
     try {
@@ -387,7 +490,7 @@ export const sendPasswordResetCode = async (req, res) => {
         }  
         const user = await User.findOne({ email });
         if (user) {
-            const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const resetCode = generateResetCode();
             const hashedCode = await bcrypt.hash(resetCode, 10);
             user.passwordResetCode = {  
                 codeHash: hashedCode,  

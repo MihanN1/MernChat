@@ -9,9 +9,12 @@ function LoginPage() {
   const [formData, setFormData] = useState({ identifier: "", password: "" });
   const { login, isLoggingIn } = useAuthStore();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
       e.preventDefault();
-      login(formData);
+      const result = await login(formData);
+      if (result && result.twoFactorRequired) {
+        navigate('/2fa');
+      }
   };
 
   return (

@@ -216,6 +216,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ## 📬 Contacts
 
 *(Placeholder — contacts will be added later, right now you can contact me through krutoysansn1@gmail.com email, as i am the only developer of this)*
+For now its place where you share bugs, issues, send reports and security concerns for your accounts, if this website even made it to production.
 
 ---
 

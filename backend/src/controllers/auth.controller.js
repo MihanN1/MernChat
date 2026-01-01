@@ -157,7 +157,7 @@ export const login = async (req,res) => {
             } catch (error) {
                 console.error("Failed to send 2FA code:", error);
             }
-            const tempToken = generateTempToken(user._id);
+            const tempToken = generateTempToken(user._id, res);
             res.status(200).json({
                 twoFactorRequired: true,
                 message: "Two-factor authentication code sent to your email",
@@ -422,7 +422,7 @@ export const sendNewEmailVerification = async (req, res) => {
         await user.setEmailVerificationCode(verificationCode, newEmail);
         try {
                 await sendEmailVerificationEmail(
-                    user.email, 
+                    newEmail, 
                     user.fullName,
                     ENV.CLIENT_URL,
                     verificationCode

@@ -8,7 +8,7 @@ function TwoFactorPage() {
     const [code, setCode] = useState('');
     const [isResending, setIsResending] = useState(false);
     const navigate = useNavigate();
-    const { verifyTwoFactor, isVerifying2FA, twoFactorData, clearTwoFactorData } = useAuthStore();
+    const { verifyTwoFactor, isVerifying2FA, twoFactorData, clearTwoFactorData, resendTwoFactor } = useAuthStore();
     useEffect(() => {
         if (!twoFactorData) {
             navigate('/login');
@@ -17,7 +17,7 @@ function TwoFactorPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (code.length !== 6) {
-            alert('Please enter a valid 6-digit code');
+            toast.error('Please enter a valid 6-digit code');
             return;
         }
         verifyTwoFactor(code);

@@ -36,7 +36,7 @@ This document outlines the structure, technology stack, update roadmap, contribu
 * TailwindCSS
 * WebSockets / Socket.IO client
 * REST API client (Axios/Fetch)
-* Planned: animated background, theme system, custom navigation animation, audio demos
+* Planned: theme system, custom navigation animation
 
 ### **Backend**
 
@@ -62,13 +62,54 @@ This document outlines the structure, technology stack, update roadmap, contribu
 * **PORT:** the port backend app will run on if NODE_ENV === development.
 * **CLIENT_URL:** the link that the website will run on if NODE_ENV === development.
 * **NODE_ENV:** the mode of running the app. Development will run locally, production - normally).
-* **JWT_SECRET:** a string to generate a more or less secure token, just a key.
+* **JWT_SECRET, JWT_TEMP_SECRET:** a string to generate a secure token, a key for jwt token(for logging in) and temporary jwt token(for 2FA) respectively.
 * **RESEND_API_KEY:** an API key required for emailing to work.
-* **EMAIL_FROM:** the email address the emails are gonna be sent from.
+* **EMAIL_FROM, EMAIL_FROM_PROD:** the email address the emails are gonna be sent from in development/production.
 * **EMAIL_FROM_NAME:** the name on the letter.
 * **CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME:** the things cloudinary needs in order to connect to the website.
 * **ARCJET_KEY:** the key in order for the security functions to work properly.
 * **MONGO_URI:** the URI for connecting to MONGO database.
+
+### **Dependencies**
+**Frontend:**
+```
+frontend@0.0.0 Path\to\MernChat\frontend
+├── @eslint/js@9.38.0
+├── @types/react-dom@19.2.2
+├── @types/react@19.2.2
+├── @vitejs/plugin-react@5.0.4
+├── autoprefixer@10.4.21
+├── axios@1.13.2
+├── daisyui@4.12.24
+├── eslint-plugin-react-hooks@5.2.0
+├── eslint-plugin-react-refresh@0.4.24
+├── eslint@9.38.0
+├── globals@16.4.0
+├── lucide-react@^0.553.0
+├── postcss@8.5.6
+├── react-dom@19.2.0
+├── react-hot-toast@^2.6.0
+├── tailwindcss@3.4.18
+├── vite@7.1.12
+└── zustand@5.0.3
+```
+
+**Backend:**
+```
+backend@1.0.0 Path\to\MernChat\backend
+├── @arcjet/inspect@1.0.0-beta.10
+├── @arcjet/node@1.0.0-beta.10
+├── bcryptjs@2.4.3
+├── cloudinary@2.5.1
+├── cookie-parser@1.4.7
+├── UNMET DEPENDENCY cors@^2.8.5
+├── dotenv@16.4.7
+├── express@4.21.2
+├── jsonwebtoken@9.0.2
+├── mongoose@8.10.1
+├── resend@6.0.2
+└── socket.io@^4.8.1
+```
 
 ---
 
@@ -111,7 +152,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ### **1.4.x — Settings Update**
 
 * Navigation animation
-* Audio settings: mic, headphones, noise suppression, demo audio
+* Audio settings: mic, headphones, noise suppression, listen-to-yourself-to-check-your-devices button.
 * Language selector (persistent)
 * Theme selector (persistent, all pages)
 * Newsletter checkboxes
@@ -127,7 +168,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Message search by filters
 * Message search by phrase
 * Reactions
-* Cookie management system overhaul
+* Improved cookies system: full refusal, selective cookies, new cookies where needed
 
 ### **1.6.x — Referral System**
 
@@ -208,8 +249,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * “Delete for me / delete for all” message removal
 * Sounds overhaul
 * Up-to-date modules & dependency upgrades
-* Improved cookies system: full refusal, selective cookies, new cookies where needed
-* Custom error pages - *(PARTLY DONE)*
+* Custom error pages
 
 ---
 

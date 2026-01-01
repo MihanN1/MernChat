@@ -250,6 +250,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Sounds overhaul
 * Up-to-date modules & dependency upgrades
 * Custom error pages
+* Ping display
 
 ---
 

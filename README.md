@@ -148,6 +148,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Video calls
 * Screen sharing
 * Timestamps
+* Ending the call if there is only one person for >3mins
+* Leaving the voice channel if afk for >3mins
 
 ### **1.4.x — Settings Update**
 
@@ -239,7 +241,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ## 🔧 Future Update Plans (Extra)
 
 * Last‑seen indicators
-* Turning sounds off and on(muting)
+* Turning sounds off and on(muting sound and micro, muting chats)
 * Making tag notifications toggable
 * Status updates
 * Tags: `@everyone`, `@here`(might be implemented in 1.2.x)

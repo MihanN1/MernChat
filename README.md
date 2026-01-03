@@ -170,6 +170,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Message search by filters
 * Message search by phrase
 * Reactions
+* Message redacting
 * Improved cookies system: full refusal, selective cookies, new cookies where needed
 
 ### **1.6.x — Referral System**
@@ -253,6 +254,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Up-to-date modules & dependency upgrades
 * Custom error pages
 * Ping display
+* Regular website for marketing, PR and server statuses
+* Support website
 
 ---
 

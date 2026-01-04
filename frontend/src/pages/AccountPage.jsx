@@ -1,11 +1,22 @@
-import React from "react";
+import { useEffect } from "react";
 import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
 import AccountSidebar from "../components/account/AccountSidebar";
 import AccountGeneralSection from "../components/account/AccountGeneralSection";
 import AccountSecuritySection from "../components/account/AccountSecuritySection";
-import AccountPrivacySection from "../components/account/AccountPrivacySection";
+import { useAccountStore } from "../store/useAccountStore";
+import NoSettingPlaceholder from '../components/account/NoSettingPlaceholder';
+import { useAuthStore } from "../store/useAuthStore";
 
 function AccountPage() {
+  const { activeSetting, setUserData, setActiveSetting } = useAccountStore();
+  const { authUser } = useAuthStore();
+  useEffect(() => {
+    if (authUser) {
+      setUserData(authUser);
+    }
+    setActiveSetting(null);
+  }, [authUser, setUserData, setActiveSetting]);
+
   return (
     <div className="w-full max-w-6xl h-[800px]">
       <BorderAnimatedContainer>
@@ -14,9 +25,9 @@ function AccountPage() {
             <AccountSidebar />
           </div>
           <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-900/40 backdrop-blur-sm">
-            <AccountGeneralSection />
-            <AccountSecuritySection />
-            <AccountPrivacySection />
+            {activeSetting === "general" ? <AccountGeneralSection /> : 
+             activeSetting === "security" ? <AccountSecuritySection /> :
+             <NoSettingPlaceholder />}
           </div>
         </div>
       </BorderAnimatedContainer>

@@ -162,6 +162,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 ### **1.5.x — Messaging & Misc**
 
 * Audio messages
+* Pinning messages
 * Video messages
 * Branches/threads
 * Links settings
@@ -242,6 +243,8 @@ Versions planned from **1.0.x** to **2.5.x**:
 ## 🔧 Future Update Plans (Extra)
 
 * Last‑seen indicators
+* Clear cache button
+* Viewing files in explorer
 * Turning sounds off and on(muting sound and micro, muting chats)
 * Making tag notifications toggable
 * Status updates
@@ -250,6 +253,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Page transitions without reloads (YouTube-style) or custom animation
 * Video screen-demo prototypes
 * “Delete for me / delete for all” message removal
+* When "delete for me" is used, timer for 10 seconds to cancel the deletion.
 * Sounds overhaul
 * Up-to-date modules & dependency upgrades
 * Custom error pages

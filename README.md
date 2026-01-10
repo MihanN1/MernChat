@@ -173,6 +173,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Reactions
 * Message redacting
 * Scheduling messages
+* Message drafts
 * Improved cookies system: full refusal, selective cookies, new cookies where needed
 
 ### **1.6.x — Referral System**

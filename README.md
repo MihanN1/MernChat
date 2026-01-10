@@ -172,6 +172,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Message search by phrase
 * Reactions
 * Message redacting
+* Scheduling messages
 * Improved cookies system: full refusal, selective cookies, new cookies where needed
 
 ### **1.6.x — Referral System**
@@ -192,6 +193,7 @@ Versions planned from **1.0.x** to **2.5.x**:
 * Friend nicknames
 * Email receiving with Resend(for reporting bugs)
 * Reporting(AND admin panel for banning the user and looking through reports)
+* Profile view(common groups, AKA's, etc)
 
 ### **1.9.x — Text Formatting**
 

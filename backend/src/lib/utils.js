@@ -17,3 +17,19 @@ export const generateToken = (userId, res) => {
     });
     return token
 };
+export const generateTempToken = (userId, res) => {
+    const { JWT_TEMP_SECRET } = ENV;
+    if (!JWT_TEMP_SECRET) {
+        throw new Error("JWT_TEMP_SECRET is not configured");
+    };
+    const token = jwt.sign({userId}, JWT_TEMP_SECRET, {
+        expiresIn: "5m",
+    });
+    res.cookie("jwt_temp", token, {
+        maxAge: 5*60*1000,
+        httpOnly: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "development" ? false : true,
+    });
+    return token
+};

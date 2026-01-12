@@ -1,91 +1,595 @@
-import { generateToken } from "../lib/utils.js";
+import { generateToken, generateTempToken } from "../lib/utils.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
-import {sendWelcomeEmail} from "../emails/emailHandlers.js";
-import {ENV} from "../lib/env.js";
+import { sendWelcomeEmail, sendNewRecoveryEmail, sendPasswordResetEmail, sendEmailVerificationEmail, sendTwoFactorAuthEmail } from "../emails/emailHandlers.js";
+import { ENV } from "../lib/env.js";
 import cloudinary from "../lib/cloudinary.js";
+import crypto from "crypto";
 
-export const signup = async (req,res) => {
-    const {fullName, email, password} = req.body
+export const updateProfile = async (req, res) => {
     try {
-        emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const user = await User.findOne({email});
-        if (user) return res.status(400).json({message: "Email already exists"});
-        if (!fullName || !email || !password) {
-            return res.status(400).json({message: "All fields are required"})
-        };
-        if (password.length < 8) {
-            return res.status(400).json({message: "Password cant be less than 8 characters"})
-        };
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({message: "Invalid email format"})
-        };
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt)
-        const newUser = new User({
-            fullName,
-            email,
-            password: hashedPassword
-        });
-        if (newUser) {
-            const savedUser = await newUser.save()
-            generateToken(savedUser._id,res)
-            res.status(201).json({
-                _id:newUser._id,
-                fullName:newUser.fullName,
-                email:newUser.email,
-                profilePic: newUser.profilePic,
-            });
-            try {
-                await sendWelcomeEmail(savedUser.email, savedUser.fullName, ENV.CLIENT_URL);
-            } catch {
-                console.error("Failed to send welcome email:", error);
+        const { 
+            nickname, 
+            tag, 
+            profilePic, 
+            currentPassword, 
+            newPassword, 
+            newEmail, 
+            verificationCode, 
+            securitySettings 
+        } = req.body;
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        let updateData = {};
+        if (nickname !== undefined) {
+            if (nickname.length < 3 || nickname.length > 20) {
+                return res.status(400).json({ 
+                    message: "Nickname must be 3-20 characters" 
+                });
             }
-        } else {
-            res.status(400).json({message: "Invalid user data"});
-        };
+            updateData.nickname = nickname;
+        }
+        if (tag !== undefined) {
+            const formattedTag = tag.toLowerCase().replace(/\s/g, "");
+            if (formattedTag.length < 1 || formattedTag.length > 12) {
+                return res.status(400).json({ 
+                    message: "Tag must be 1-12 characters (after removing spaces)" 
+                });
+            }
+            const existingTag = await User.findOne({ 
+                tag: formattedTag, 
+                _id: { $ne: userId } 
+            });
+            if (existingTag) {
+                return res.status(400).json({ 
+                    message: "Tag is already taken" 
+                });
+            }
+            updateData.tag = formattedTag;
+        }
+        if (profilePic !== undefined) {
+            if (profilePic && profilePic.startsWith('data:image')) {
+                try {
+                    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+                    updateData.profilePic = uploadResponse.secure_url;
+                } catch (uploadError) {
+                    console.error("Cloudinary upload error:", uploadError);
+                    return res.status(400).json({ 
+                        message: "Failed to upload image" 
+                    });
+                }
+            } else if (profilePic === "") {
+                updateData.profilePic = "";
+            }
+        }
+        if (currentPassword && newPassword) {
+            const user = await User.findById(userId);  
+            if (!user) {  
+                return res.status(404).json({ message: 'User not found' });  
+            }
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Current password is incorrect' });
+            }
+            const salt = await bcrypt.genSalt(10);  
+            updateData.password = await bcrypt.hash(newPassword, salt);
+        }
+        if (newEmail && verificationCode) {
+            const user = await User.findById(userId);  
+            if (!user) {  
+                return res.status(404).json({ message: 'User not found' });  
+            }  
+            const isValid = await user.verifyEmailVerificationCode(verificationCode)
+            if (!isValid) {
+                return res.status(400).json({ message: 'Invalid or expired verification code' });
+            }
+            updateData.email = newEmail;  
+            updateData.emailVerified = true;  
+            await user.clearEmailVerificationCode()
+        }
+        if (securitySettings) {
+            if (typeof securitySettings.twoFactor === 'boolean') {
+                updateData.twoFactorEnabled = securitySettings.twoFactor;
+            }
+            if (typeof securitySettings.qrLogin === 'boolean') {
+                updateData.qrLoginEnabled = securitySettings.qrLogin;
+            }
+        }
+        const updatedUser = await User.findByIdAndUpdate(
+            userId, 
+            updateData, 
+            { new: true }
+        ).select('-password');
+        res.status(200).json(updatedUser);
     } catch (error) {
-        console.log("Error in singup controller: ", error);
-        res.status(500).json({message: "Internal server error"});
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ message: messages.join(', ') });
+        }
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.tag) {
+            return res.status(400).json({ message: "Tag is already taken" });
+        }
+        console.error("Update profile error:", error);
+        res.status(500).json({ message: error.message });
     }
 };
+const generateRecoveryCode = () => {
+    return crypto.randomBytes(6).toString('hex').toUpperCase();
+};
+const generateVerificationCode = () => {
+    return crypto.randomInt(100000, 1000000).toString();
+};
+const generateResetCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+};
+const generateTwoFactorCode = () => {
+    return crypto.randomInt(100000, 1000000).toString();
+};
 export const login = async (req,res) => {
-    const {email,password} = req.body
+    const {identifier, password} = req.body
     try {
-        const user = await User.findOne({email});
+        const user = await User.findOne({
+            $or: [
+                { email: identifier },
+                { nickname: identifier }
+            ]
+        });
         if(!user) return res.status(400).json({message:"Invalid credentials"});
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
         if(!isPasswordCorrect) return res.status(400).json({message:"Invalid credentials"});
-        generateToken(user._id, res);
-        res.status(200).json({
-            _id: user._id,
-            fullName: user.fullName,
-            email: user.email,
-            profilePic: user.profilePic,
-        });
+        if (user.twoFactorEnabled) {
+            const authCode = generateTwoFactorCode();
+            user.twoFactorCode = {
+                codeHash: await bcrypt.hash(authCode, 10),
+                expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+            };
+            await user.save();
+            try {
+                await sendTwoFactorAuthEmail(
+                    user.email,
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    authCode
+                );
+            } catch (error) {
+                console.error("Failed to send 2FA code:", error);
+            }
+            const tempToken = generateTempToken(user._id, res);
+            res.status(200).json({
+                twoFactorRequired: true,
+                message: "Two-factor authentication code sent to your email",
+                tempToken: tempToken,
+                userId: user._id
+            });
+        } else {
+            generateToken(user._id, res);
+            res.status(200).json({
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                nickname: user.nickname,
+                tag: user.tag,
+                profilePic: user.profilePic,
+                twoFactorEnabled: user.twoFactorEnabled,
+                qrLoginEnabled: user.qrLoginEnabled
+            });
+        }
     } catch (error) {
         console.error("Error in login controller:", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+export const resendTwoFactorCode = async (req, res) => {
+    try {
+        const user = req.tempUser;
+        const twoFactorCode = generateVerificationCode();
+        user.twoFactorCode = {
+            codeHash: await bcrypt.hash(twoFactorCode, 10),
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+        };
+        await user.save();
+        try {
+            await sendTwoFactorAuthEmail(
+                user.email,
+                user.fullName,
+                ENV.CLIENT_URL,
+                twoFactorCode
+            );
+        } catch (error) {
+            console.error("Failed to resend 2FA code:", error);
+        }
+        res.status(200).json({
+            message: "New verification code sent to your email"
+        });
+    } catch (error) {
+        console.error("Error in resendTwoFactorCode controller:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 export const logout = (req,res) => {
     res.cookie("jwt","",{maxAge:0});
     res.status(200).json({message: "Logged out successfully"});
 };
-export const updateProfile = async (req,res) => {
+export const verifyTwoFactor = async (req, res) => {
     try {
-        const { profilePic } = req.body;
-        const userId = req.user._id;
-        const uploadResponse = await cloudinary.uploader.upload(profilePic);
-        const updatedUser = await User.findByIdAndUpdate(
-            userId, 
-            {profilePic:uploadResponse.secure_url}, 
-            {new:true}
-        );
-        if(!profilePic) return res.status(400).json({message: "Profile pic is required"});
-        res.status(200).json(updatedUser);
+        const { twoFactorCode } = req.body;
+        const user = req.tempUser;
+        if (!twoFactorCode) {
+            return res.status(400).json({ message: "Verification code is required" });
+        }
+        if (!user.twoFactorCode || !user.twoFactorCode.codeHash) {
+            return res.status(400).json({ message: "2FA code expired or not found" });
+        }
+        if (user.twoFactorCode.expiresAt < new Date()) {
+            user.twoFactorCode = { codeHash: "", expiresAt: null };
+            await user.save();
+            return res.status(400).json({ message: "2FA code has expired" });
+        }
+        const isCodeValid = await bcrypt.compare(twoFactorCode, user.twoFactorCode.codeHash);
+        if (!isCodeValid) {
+            return res.status(400).json({ message: "Invalid verification code" });
+        }
+        user.twoFactorCode = { codeHash: "", expiresAt: null };
+        await user.save();
+        res.cookie("jwt_temp", "", {
+            maxAge: 0,
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "development" ? false : true,
+        });
+        generateToken(user._id, res);
+        res.status(200).json({
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            nickname: user.nickname,
+            tag: user.tag,
+            profilePic: user.profilePic,
+            twoFactorEnabled: user.twoFactorEnabled,
+            qrLoginEnabled: user.qrLoginEnabled
+        });
     } catch (error) {
-        console.log("Error in update profile:", error);
+        console.error("Error in verifyTwoFactor controller:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const signup = async (req, res) => {
+    const {fullName, email, password, nickname, tag} = req.body;
+    try {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const existingEmail = await User.findOne({email});
+        if (existingEmail) return res.status(400).json({message: "Email already exists"});
+        const formattedTag = tag.toLowerCase().replace(/\s/g, "");
+        const existingTag = await User.findOne({tag: formattedTag});
+        if (existingTag) return res.status(400).json({message: "Tag is already taken"});
+        if (!fullName || !email || !password || !nickname || !tag) {
+            return res.status(400).json({message: "All fields are required"});
+        };
+        if (nickname.length < 3 || nickname.length > 20) {
+            return res.status(400).json({message: "Nickname must be 3-20 characters"});
+        };
+        if (tag.length < 1 || tag.length > 12) {
+            return res.status(400).json({message: "Tag must be 1-12 characters"});
+        };
+        if (password.length < 8) {
+            return res.status(400).json({message: "Password can't be less than 8 characters"});
+        };
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({message: "Invalid email format"});
+        };
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const recoveryCode = generateRecoveryCode();
+        const recoveryCodeHash = await bcrypt.hash(recoveryCode, 10);
+        const newUser = new User({
+            fullName,
+            email,
+            password: hashedPassword,
+            nickname,
+            tag: formattedTag,
+            recoveryCodeHash,
+            twoFactorEnabled: false,
+            qrLoginEnabled: false
+        });
+        if (newUser) {
+            const savedUser = await newUser.save();
+            generateToken(savedUser._id, res);
+            try {
+                await sendWelcomeEmail(
+                    savedUser.email, 
+                    savedUser.fullName, 
+                    ENV.CLIENT_URL,
+                    recoveryCode
+                );
+            } catch (error) {
+                console.error("Failed to send welcome email:", error);
+            }
+            res.status(201).json({
+                _id: newUser._id,
+                fullName: newUser.fullName,
+                email: newUser.email,
+                nickname: newUser.nickname,
+                tag: newUser.tag,
+                profilePic: newUser.profilePic,
+                twoFactorEnabled: newUser.twoFactorEnabled,
+                qrLoginEnabled: newUser.qrLoginEnabled
+            });
+        } else {
+            res.status(400).json({message: "Invalid user data"});
+        };
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({message: messages.join(', ')});
+        }
+        if (error.code === 11000) {
+            if (error.keyPattern && error.keyPattern.tag) {
+                return res.status(400).json({message: "Tag is already taken"});
+            }
+            if (error.keyPattern && error.keyPattern.email) {
+                return res.status(400).json({message: "Email already exists"});
+            }
+        }
+        console.log("Error in signup controller: ", error);
         res.status(500).json({message: "Internal server error"});
+    }
+};
+
+export const sendRecoveryCode = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+        const user = await User.findOne({ email });
+        if (user) {
+            const recoveryCode = generateRecoveryCode();
+            await user.setRecoveryCode(recoveryCode);
+            try {
+                await sendNewRecoveryEmail(
+                    user.email, 
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    recoveryCode
+                );
+            } catch (error) {
+                console.error("Failed to send email with new recovery code:", error);
+            }
+        }
+        return res.status(200).json({ 
+            message: 'If an account exists with this email, a recovery code has been sent.'
+        });
+    } catch (error) {
+        console.error("Send recovery code error:", error);
+        res.status(500).json({ message: "Failed to send recovery code" });
+    }
+};
+export const verifyRecoveryCode = async (req, res) => {
+    try {
+        const { email, recoveryCode } = req.body;
+        
+        if (!email || !recoveryCode) {
+            return res.status(400).json({ 
+                message: "Email and recovery code are required" 
+            });
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ 
+                message: "Invalid recovery code"
+            });
+        }
+        const isValid = await user.verifyRecoveryCode(recoveryCode.toUpperCase());  
+        if (!isValid) { 
+            return res.status(400).json({ 
+                message: "Invalid recovery code" 
+            });
+        }
+        res.status(200).json({ 
+            message: "Recovery code verified successfully",
+            canProceed: true
+        });
+    } catch (error) {
+        console.error("Verify recovery code error:", error);
+        res.status(500).json({ message: "Failed to verify recovery code" });
+    }
+};
+export const sendNewEmailVerification = async (req, res) => {
+    try {
+        const { email, newEmail } = req.body;
+        if (!email || !newEmail) {
+            return res.status(400).json({
+                message: "Both current and new email are required"
+            });
+        }
+        const user = await User.findOne({ email });  
+        if (!user) {  
+            return res.status(200).json({  
+                message: "If account exists, verification code sent to new email."  
+            });  
+        }
+        const existingUser = await User.findOne({ email: newEmail });
+        if (existingUser) {
+            return res.status(400).json({
+                message: "Email is already in use"
+            });
+        }
+        const verificationCode = generateVerificationCode();
+        await user.setEmailVerificationCode(verificationCode, newEmail);
+        try {
+                await sendEmailVerificationEmail(
+                    newEmail, 
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    verificationCode
+                );
+        } catch (error) {
+                console.error("Failed to send email verification code", error);
+        }
+        res.status(200).json({
+            message: "Verification code sent to new email",
+        });
+    } catch (error) {
+        console.error("Send new email verification error:", error);
+        res.status(500).json({ message: "Failed to send verification code" });
+    }
+};
+export const recoverEmail = async (req, res) => {
+    try {
+        const { email, newEmail, verificationCode, recoveryCode } = req.body;
+        if (!email || !verificationCode || !recoveryCode || !newEmail) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "Invalid codes" });
+        }
+        const isRecoveryCodeValid = await user.verifyRecoveryCode(recoveryCode);
+        if (!isRecoveryCodeValid) {
+            return res.status(400).json({ message: "Invalid recovery code" });
+        }
+        const isVerificationCodeValid =
+            await user.verifyEmailVerificationCode(verificationCode);
+        if (!isVerificationCodeValid) {
+            return res.status(400).json({ message: "Invalid or expired verification code" });
+        }
+        const existingUser = await User.findOne({ email: newEmail });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email is already in use" });
+        }
+        user.email = newEmail;
+        const newRecoveryCode = generateRecoveryCode();
+        user.recoveryCodeHash = await bcrypt.hash(newRecoveryCode, 10);
+        await user.clearEmailVerificationCode();
+        await user.save();
+        if (ENV.NODE_ENV === "development") {
+            console.log(`[DEV] New recovery code for ${newEmail}: ${newRecoveryCode}`);
+        }
+        res.status(200).json({
+            message: "Email updated successfully"
+        });
+    } catch (error) {
+        console.error("Recover email error:", error);
+        res.status(500).json({ message: "Failed to recover email" });
+    }
+};
+
+export const sendPasswordResetCode = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'Please provide a valid email address' });
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;  
+        if (!emailRegex.test(email)) {  
+            return res.status(400).json({ message: 'Invalid email format' });  
+        }  
+        const user = await User.findOne({ email });
+        if (user) {
+            const resetCode = generateResetCode();
+            const hashedCode = await bcrypt.hash(resetCode, 10);
+            user.passwordResetCode = {  
+                codeHash: hashedCode,  
+                expiresAt: new Date(Date.now() + 15 * 60 * 1000)  
+            };  
+            await user.save();
+            try {
+                await sendPasswordResetEmail(
+                    user.email, 
+                    user.fullName,
+                    ENV.CLIENT_URL,
+                    resetCode
+                );
+            } catch (error) {
+                console.error("Failed to send password reset code", error);
+            }
+        }
+        return res.status(200).json({
+            message: 'If an account exists with this email, a password reset code has been sent.'
+        });
+    } catch (error) {
+        console.error('Send password reset code error:', error);
+        return res.status(500).json({ message: 'An error occurred. Please try again later.' });
+    }
+};
+export const verifyPasswordResetCode = async (req, res) => {
+    try {
+        const { email, resetCode } = req.body;
+        if (!email || !resetCode) {  
+            return res.status(400).json({ 
+                message: "Email and reset code are required" 
+            });  
+        }
+        const user = await User.findOne({ email });
+        if (user) {
+            if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {  
+                    return res.status(400).json({ 
+                        message: "Invalid reset code" 
+                    });  
+                }  
+            if (user.passwordResetCode.expiresAt < new Date()) {  
+                user.passwordResetCode = { codeHash: "", expiresAt: null };  
+                await user.save();  
+                return res.status(400).json({ 
+                    message: "Reset code has expired" 
+                });  
+            }  
+            const isCodeValid = await bcrypt.compare(resetCode, user.passwordResetCode.codeHash);  
+            if (!isCodeValid) {  
+                return res.status(400).json({ 
+                    message: "Invalid reset code" 
+                });  
+            } 
+        }
+        res.status(200).json({ 
+            message: "Reset code is valid."
+        });
+    } catch (error) {
+        console.error("Reset password error:", error);
+        res.status(500).json({ message: "Failed to validate password reset code" });
+    }
+};
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, resetCode, newPassword } = req.body;
+        const user = await User.findOne({ email });  
+        if (!user) {  
+            return res.status(400).json({ 
+                message: "Invalid reset code"  
+            });  
+        }
+        if (!user.passwordResetCode || !user.passwordResetCode.codeHash) {  
+            return res.status(400).json({ 
+                message: "Invalid reset code" 
+            });  
+        }  
+        if (user.passwordResetCode.expiresAt < new Date()) {  
+            user.passwordResetCode = { codeHash: "", expiresAt: null };  
+            await user.save();  
+            return res.status(400).json({ 
+                message: "Reset code has expired" 
+            });  
+        }  
+        const isCodeValid = await bcrypt.compare(resetCode, user.passwordResetCode.codeHash);  
+        if (!isCodeValid) {  
+            return res.status(400).json({ 
+                message: "Invalid reset code" 
+            });  
+        }  
+        
+        const salt = await bcrypt.genSalt(10);  
+        user.password = await bcrypt.hash(newPassword, salt);  
+        user.passwordResetCode = { codeHash: "", expiresAt: null };  
+        await user.save();  
+        res.status(200).json({ 
+            message: "Password reset successfully. You can now login with your new password."  
+        });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
